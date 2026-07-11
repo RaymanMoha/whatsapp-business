@@ -26,7 +26,11 @@ WAHA_API_KEY=make-this-a-random-long-string
 AUTH_SECRET=make-this-a-random-long-string
 BUSINESS_NAME=Your Client Business
 BOT_NAME=Ask Your Business
+MONGODB_URI=your_mongodb_atlas_connection_string
+MONGODB_DB=whatsapp_business
 ```
+
+If `MONGODB_URI` is set, conversations and message templates are stored in MongoDB Atlas. If it is missing, the app falls back to local JSON files under `data/` for local development.
 
 4. Start WAHA:
 
@@ -93,6 +97,8 @@ The bot is instructed not to invent answers outside this file.
 
 ## Production notes
 
+- Store dashboard data in MongoDB Atlas using `MONGODB_URI`.
+- Do not commit `.env` or any MongoDB password.
 - Do not expose WAHA publicly without `WAHA_API_KEY`.
 - Use HTTPS for hosted webhooks.
 - Use a dedicated WhatsApp number, not a personal number.

@@ -12,6 +12,14 @@ export default async function BotSettingsPage() {
       ["AI model", status.groq.model],
       ["Groq key", status.groq.configured ? "Configured" : "Missing"],
       ["Bot service", status.bot.online ? "Online" : "Offline"],
+      [
+         "Data storage",
+         status.mongo.configured
+            ? status.mongo.connected
+               ? `MongoDB · ${status.mongo.database}`
+               : "MongoDB configured but not connected"
+            : "Local JSON fallback",
+      ],
       ["Fallback", process.env.HUMAN_HANDOFF_MESSAGE || commerceBusinessProfile.handoff],
    ];
 

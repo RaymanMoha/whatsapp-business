@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
+import { getMongoDb, isMongoConfigured } from './mongodb.js'
 
 const dataDir = path.join(process.cwd(), 'data')
 const templatesFile = path.join(dataDir, 'message-templates.json')
@@ -57,6 +58,27 @@ async function ensureStore() {
 }
 
 export async function readMessageTemplates() {
+  if (isMongoConfigured()) {
+    const db = await getMongoDb()
+    const count = await db.collection('messageTemplates').countDocuments()
+
+    if (count === 0) {
+      await db.collection('messageTemplates').insertMany(defaultTemplates)
+    }
+
+    return db
+      .collection('messageTemplates')
+      .find({})
+      .sort({ name: 1 })
+      .toArray()
+      .then((templates) =>
+        templates.map(({ _id, ...template }) => ({
+          ...template,
+          body: String(template.body || '').replaceAll('\\n', '\n'),
+        })),
+      )
+  }
+
   await ensureStore()
   const raw = await readFile(templatesFile, 'utf8')
   const parsed = JSON.parse(raw)
@@ -70,6 +92,33 @@ export async function readMessageTemplates() {
 }
 
 export async function upsertMessageTemplate(input) {
+  if (isMongoConfigured()) {
+    const db = await getMongoDb()
+    const now = new Date().toISOString()
+    const id = input.id || `template-${Date.now()}-${Math.random().toString(16).slice(2)}`
+    const body = String(input.body || '').trim()
+    const name = String(input.name || '').trim()
+    const category = String(input.category || 'General').trim() || 'General'
+
+    if (!name) throw new Error('Template name is required')
+    if (!body) throw new Error('Template body is required')
+
+    const existing = await db.collection('messageTemplates').findOne({ id })
+    const variables = Array.from(body.matchAll(/{{\s*([a-zA-Z0-9_]+)\s*}}/g)).map((match) => match[1])
+    const template = {
+      id,
+      name,
+      category,
+      body,
+      variables: [...new Set(variables)],
+      createdAt: existing?.createdAt || now,
+      updatedAt: now,
+    }
+
+    await db.collection('messageTemplates').updateOne({ id }, { $set: template }, { upsert: true })
+    return template
+  }
+
   await ensureStore()
   const templates = await readMessageTemplates()
   const now = new Date().toISOString()
@@ -106,6 +155,12 @@ export async function upsertMessageTemplate(input) {
 }
 
 export async function deleteMessageTemplate(id) {
+  if (isMongoConfigured()) {
+    const db = await getMongoDb()
+    await db.collection('messageTemplates').deleteOne({ id })
+    return
+  }
+
   await ensureStore()
   const templates = await readMessageTemplates()
   const nextTemplates = templates.filter((template) => template.id !== id)

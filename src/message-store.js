@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
+import { getMongoDb, isMongoConfigured } from './mongodb.js'
 
 const dataDir = path.join(process.cwd(), 'data')
 const conversationsFile = path.join(dataDir, 'conversations.json')
@@ -14,6 +15,11 @@ async function ensureStore() {
 }
 
 export async function readConversationThreads() {
+  if (isMongoConfigured()) {
+    const db = await getMongoDb()
+    return db.collection('conversations').find({}).sort({ updatedAt: -1 }).limit(200).toArray()
+  }
+
   await ensureStore()
   const raw = await readFile(conversationsFile, 'utf8')
   const parsed = JSON.parse(raw)
@@ -21,6 +27,42 @@ export async function readConversationThreads() {
 }
 
 export async function appendConversationEvent(event) {
+  if (isMongoConfigured()) {
+    const db = await getMongoDb()
+    const now = new Date().toISOString()
+    const chatId = String(event.chatId)
+    const message = {
+      id: String(event.id || `${chatId}-${Date.now()}`),
+      direction: event.direction,
+      text: String(event.text || '').slice(0, 4000),
+      status: event.status || 'received',
+      timestamp: event.timestamp || now,
+    }
+
+    await db.collection('conversations').updateOne(
+      { chatId },
+      {
+        $setOnInsert: {
+          id: `thread-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          chatId,
+          createdAt: now,
+        },
+        $set: {
+          customerName: event.customerName || chatId,
+          updatedAt: now,
+        },
+        $push: {
+          messages: {
+            $each: [message],
+            $slice: -80,
+          },
+        },
+      },
+      { upsert: true },
+    )
+    return
+  }
+
   await ensureStore()
   const threads = await readConversationThreads()
   const now = new Date().toISOString()

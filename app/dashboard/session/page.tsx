@@ -25,6 +25,14 @@ export default async function SessionPage() {
                      ["WhatsApp name", status.waha.pushName || "Not available"],
                      ["Bot service", status.bot.online ? "Online" : "Offline"],
                      ["Groq", status.groq.configured ? "Configured" : "Missing key"],
+                     [
+                        "MongoDB",
+                        status.mongo.configured
+                           ? status.mongo.connected
+                              ? `Connected · ${status.mongo.database}`
+                              : "Configured but not connected"
+                           : "Using local JSON fallback",
+                     ],
                   ].map(([label, value]) => (
                      <div key={label} className="rounded-xl border p-4">
                         <strong className="block">{label}</strong>
