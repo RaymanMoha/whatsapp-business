@@ -1,0 +1,6 @@
+node_modules/
+.env
+.waha-sessions/
+qr-default*.png
+npm-debug.log*
+.DS_Store
