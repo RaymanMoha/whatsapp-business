@@ -10,8 +10,21 @@ type ConversationSummary = {
    lastQuestion: string;
    lastReply: string;
    status: string;
+   error?: string;
    messageCount: number;
 };
+
+function getStatusClass(status: string) {
+   if (status === "Reply sent") {
+      return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200";
+   }
+
+   if (status === "Send failed") {
+      return "bg-red-50 text-red-700 ring-1 ring-red-200";
+   }
+
+   return "bg-amber-50 text-amber-700 ring-1 ring-amber-200";
+}
 
 export function LiveQuestions({
    fallback,
@@ -52,14 +65,25 @@ export function LiveQuestions({
                <div key={conversation.id} className="rounded-xl border p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                      <strong>{conversation.customerName}</strong>
-                     <span className="text-xs text-zinc-500">
-                        {new Date(conversation.updatedAt).toLocaleString()}
-                     </span>
+                     <div className="flex flex-wrap items-center gap-2">
+                        <span
+                           className={`rounded-full px-2.5 py-1 text-xs font-medium ${getStatusClass(conversation.status)}`}>
+                           {conversation.status}
+                        </span>
+                        <span className="text-xs text-zinc-500">
+                           {new Date(conversation.updatedAt).toLocaleString()}
+                        </span>
+                     </div>
                   </div>
                   <p className="mt-2 text-sm text-zinc-800">{conversation.lastQuestion}</p>
                   {conversation.lastReply ? (
                      <p className="mt-2 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-900">
                         {conversation.lastReply}
+                     </p>
+                  ) : null}
+                  {conversation.error && !conversation.lastReply ? (
+                     <p className="mt-2 rounded-lg bg-red-50 p-3 text-sm text-red-900">
+                        {conversation.error}
                      </p>
                   ) : null}
                   <p className="mt-2 text-xs text-zinc-500">

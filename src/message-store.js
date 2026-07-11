@@ -60,6 +60,9 @@ export async function listConversationSummaries() {
     const lastMessage = messages[messages.length - 1]
     const lastInbound = [...messages].reverse().find((message) => message.direction === 'inbound')
     const lastAssistant = [...messages].reverse().find((message) => message.direction === 'assistant')
+    const lastFailure = [...messages].reverse().find(
+      (message) => message.direction === 'system' && message.status === 'failed',
+    )
 
     return {
       id: thread.id,
@@ -68,7 +71,8 @@ export async function listConversationSummaries() {
       updatedAt: thread.updatedAt,
       lastQuestion: lastInbound?.text || lastMessage?.text || '',
       lastReply: lastAssistant?.text || '',
-      status: lastAssistant ? 'Replied by AI' : 'Needs reply',
+      status: lastFailure ? 'Send failed' : lastAssistant ? 'Reply sent' : 'Waiting for AI reply',
+      error: lastFailure?.text || '',
       messageCount: messages.length,
     }
   })
