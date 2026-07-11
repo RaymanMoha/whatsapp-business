@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SignInSchema, type SignInValues } from "@/types";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signInAction } from "@/actions/auth";
 
 import {
@@ -39,6 +39,16 @@ export function SignInForm({
 
    const [submitting, setSubmitting] = React.useState(false);
    const router = useRouter();
+   const searchParams = useSearchParams();
+   const nextPath = searchParams.get("next");
+
+   function getSafeRedirectPath() {
+      if (nextPath?.startsWith("/dashboard")) {
+         return nextPath;
+      }
+
+      return "/dashboard";
+   }
 
    async function handleSubmit(values: SignInValues) {
       try {
@@ -49,13 +59,12 @@ export function SignInForm({
             : await signInAction(values)) as unknown as { ok?: boolean } | void;
          console.log("Sign in response:", res);
          
-         // Always redirect to dashboard - accept any login
-         console.log("Redirecting to dashboard...");
-         router.push("/dashboard");
+         const redirectPath = getSafeRedirectPath();
+         console.log("Redirecting to:", redirectPath);
+         router.push(redirectPath);
       } catch (error) {
          console.error("Sign in error:", error);
-         // Even on error, redirect to dashboard for demo purposes
-         router.push("/dashboard");
+         router.push(getSafeRedirectPath());
       } finally {
          setSubmitting(false);
       }

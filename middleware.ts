@@ -35,7 +35,9 @@ export async function middleware(req: NextRequest) {
   if (pathname === "/" || pathname.startsWith("/signin")) {
     if (isAuthed) {
       const url = req.nextUrl.clone()
-      url.pathname = "/dashboard"
+      const next = req.nextUrl.searchParams.get("next")
+      url.pathname = next?.startsWith("/dashboard") ? next : "/dashboard"
+      url.search = ""
       return NextResponse.redirect(url)
     }
   }
@@ -46,4 +48,3 @@ export async function middleware(req: NextRequest) {
 export const config = {
   matcher: ["/", "/signin", "/dashboard/:path*"],
 }
-
