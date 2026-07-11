@@ -1,0 +1,32 @@
+import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
+import Heading from "@/components/heading";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { commerceQuestions } from "@/lib/commerce-data";
+
+export default function QuestionsPage() {
+   return (
+      <DashboardLayout>
+         <div className="space-y-6">
+            <Heading
+               title="Customer Questions"
+               description="See what customers ask and where the AI needs better approved business information."
+            />
+            <Card className="text-black dark:text-black">
+               <CardHeader>
+                  <CardTitle>Question review queue</CardTitle>
+               </CardHeader>
+               <CardContent className="space-y-3">
+                  {commerceQuestions.map((question) => (
+                     <div key={question.id} className="rounded-xl border p-4">
+                        <strong className="block">{question.question}</strong>
+                        <p className="mt-1 text-sm text-zinc-600">
+                           {question.customer} · {question.status} · {question.time}
+                        </p>
+                     </div>
+                  ))}
+               </CardContent>
+            </Card>
+         </div>
+      </DashboardLayout>
+   );
+}

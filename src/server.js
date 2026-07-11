@@ -1,6 +1,7 @@
 import 'dotenv/config'
 
 import express from 'express'
+import { products } from './catalog.js'
 import { approvedKnowledge, businessProfile } from './knowledge.js'
 
 const app = express()
@@ -155,6 +156,12 @@ function buildSystemPrompt() {
   const knowledge = approvedKnowledge
     .map((entry, index) => `${index + 1}. ${entry.topic}: ${entry.content}`)
     .join('\n')
+  const catalog = products
+    .map((product, index) => {
+      const status = product.available ? `available, ${product.stock} in stock` : 'not available'
+      return `${index + 1}. ${product.name}: ${product.subtitle}. Category: ${product.category}. Price: KES ${product.price}. Status: ${status}.`
+    })
+    .join('\n')
 
   return `You are ${config.botName}, a WhatsApp FAQ assistant for ${config.businessName}.
 
@@ -167,8 +174,12 @@ ${businessProfile.tone}
 Approved information:
 ${knowledge}
 
+Approved product catalog:
+${catalog}
+
 Rules:
 - Answer only from the approved information above.
+- For product questions, answer only from the approved product catalog above.
 - Keep replies short enough for WhatsApp.
 - If the user asks for private payment data, OTPs, PINs, passwords, or sensitive information, refuse and give a safe next step.
 - If the approved information does not answer the question, say: "${config.humanHandoffMessage}"

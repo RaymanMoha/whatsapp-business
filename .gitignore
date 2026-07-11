@@ -1,6 +1,8 @@
 node_modules/
+.next/
 .env
 .waha-sessions/
 qr-default*.png
+tsconfig.tsbuildinfo
 npm-debug.log*
 .DS_Store
