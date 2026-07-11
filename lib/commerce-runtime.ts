@@ -10,6 +10,7 @@ type WahaSession = {
 export async function getCommerceRuntimeStatus() {
    const { getMongoStatus } = await import("@/src/mongodb");
    const { readProducts } = await import("@/src/product-store");
+   const { getMpesaStatus } = await import("@/src/mpesa-store");
    const wahaBaseUrl = process.env.WAHA_BASE_URL || "http://localhost:3001";
    const wahaApiKey = process.env.WAHA_API_KEY || "";
    const sessionName = process.env.WAHA_SESSION || "default";
@@ -65,5 +66,6 @@ export async function getCommerceRuntimeStatus() {
          withImages: imageCount,
          withoutImages: Math.max(productList.length - imageCount, 0),
       },
+      mpesa: getMpesaStatus(),
    };
 }

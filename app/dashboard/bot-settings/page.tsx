@@ -21,6 +21,7 @@ export default async function BotSettingsPage() {
             : "Local JSON fallback",
       ],
       ["Product pictures", `${status.products.withImages}/${status.products.total} uploaded`],
+      ["M-Pesa", status.mpesa.configured ? "Configured" : `Missing ${status.mpesa.missing.length} settings`],
       ["Fallback", process.env.HUMAN_HANDOFF_MESSAGE || commerceBusinessProfile.handoff],
    ];
 

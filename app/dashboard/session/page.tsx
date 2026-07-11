@@ -37,6 +37,12 @@ export default async function SessionPage() {
                         "Product pictures",
                         `${status.products.withImages}/${status.products.total} uploaded`,
                      ],
+                     [
+                        "M-Pesa",
+                        status.mpesa.configured
+                           ? `${status.mpesa.environment} · ${status.mpesa.shortCode}`
+                           : `Missing ${status.mpesa.missing.length} settings`,
+                     ],
                   ].map(([label, value]) => (
                      <div key={label} className="rounded-xl border p-4">
                         <strong className="block">{label}</strong>
