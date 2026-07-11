@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import {
   commerceApprovedKnowledge,
   commerceBusinessProfile,
-  commerceProducts,
   formatPrice,
 } from '@/lib/commerce-data'
+import { readProducts } from '@/src/product-store'
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,10 +22,12 @@ export async function POST(request: NextRequest) {
     const approvedKnowledge = commerceApprovedKnowledge
       .map((entry, index) => `${index + 1}. ${entry.topic}: ${entry.content}`)
       .join('\n')
-    const catalog = commerceProducts
+    const products = await readProducts()
+    const catalog = products
       .map((product, index) => {
         const status = product.available ? `available, ${product.stock} in stock` : 'not available'
-        return `${index + 1}. ${product.name}: ${product.subtitle}. Category: ${product.category}. Price: ${formatPrice(product.price)}. Status: ${status}.`
+        const imageStatus = product.image?.data ? 'Product picture uploaded.' : 'No product picture uploaded.'
+        return `${index + 1}. ${product.name}: ${product.subtitle}. Category: ${product.category}. Price: ${formatPrice(product.price)}. Status: ${status}. ${imageStatus}`
       })
       .join('\n')
 

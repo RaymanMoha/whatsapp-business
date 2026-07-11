@@ -4,6 +4,7 @@ node_modules/
 .waha-sessions/
 data/conversations.json
 data/message-templates.json
+data/products.json
 qr-default*.png
 tsconfig.tsbuildinfo
 npm-debug.log*

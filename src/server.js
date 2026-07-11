@@ -1,13 +1,13 @@
 import 'dotenv/config'
 
 import express from 'express'
-import { products } from './catalog.js'
 import { approvedKnowledge, businessProfile } from './knowledge.js'
 import { appendConversationEvent } from './message-store.js'
+import { findProductsForMessage, readProducts } from './product-store.js'
 
 const app = express()
 
-app.use(express.json({ limit: '1mb' }))
+app.use(express.json({ limit: '3mb' }))
 
 const config = {
   port: Number(process.env.PORT || 8080),
@@ -58,8 +58,10 @@ app.post('/webhook', async (request, response) => {
       text: incoming.text,
       status: 'received',
     })
-    const reply = await buildReply(incoming)
+    const products = await readProducts()
+    const reply = await buildReply(incoming, products)
     await sendWhatsAppText(incoming.chatId, reply, incoming.session)
+    await sendRelevantProductImages(incoming, products)
     await appendConversationEvent({
       id: `${incoming.id}-reply`,
       chatId: incoming.chatId,
@@ -96,15 +98,19 @@ app.post('/test/reply', async (request, response) => {
     return
   }
 
+  const products = await readProducts()
   const reply = await buildReply({
     id: `test-${Date.now()}`,
     chatId,
     session: config.wahaSession,
     text: message,
     fromMe: false,
-  })
+  }, products)
 
-  response.json({ reply })
+  response.json({
+    reply,
+    productImages: findProductsForMessage(products, message).filter((product) => product.image?.data).length,
+  })
 })
 
 app.listen(config.port, () => {
@@ -148,7 +154,7 @@ function extractText(payload) {
   return ''
 }
 
-async function buildReply(incoming) {
+async function buildReply(incoming, products) {
   if (!config.groqApiKey) {
     return 'The AI assistant is not configured yet. Add GROQ_API_KEY to .env and restart the bot.'
   }
@@ -165,7 +171,7 @@ async function buildReply(incoming) {
       temperature: 0.2,
       max_tokens: 350,
       messages: [
-        { role: 'system', content: buildSystemPrompt() },
+        { role: 'system', content: buildSystemPrompt(products) },
         ...history,
         { role: 'user', content: incoming.text.slice(0, 1200) },
       ],
@@ -184,14 +190,15 @@ async function buildReply(incoming) {
   )
 }
 
-function buildSystemPrompt() {
+function buildSystemPrompt(products) {
   const knowledge = approvedKnowledge
     .map((entry, index) => `${index + 1}. ${entry.topic}: ${entry.content}`)
     .join('\n')
   const catalog = products
     .map((product, index) => {
       const status = product.available ? `available, ${product.stock} in stock` : 'not available'
-      return `${index + 1}. ${product.name}: ${product.subtitle}. Category: ${product.category}. Price: KES ${product.price}. Status: ${status}.`
+      const imageStatus = product.image?.data ? 'Product picture available and can be sent after the text reply.' : 'No product picture uploaded.'
+      return `${index + 1}. ${product.name}: ${product.subtitle}. Category: ${product.category}. Price: KES ${product.price}. Status: ${status}. ${imageStatus}`
     })
     .join('\n')
 
@@ -219,6 +226,24 @@ Rules:
 - If booking details are needed, ask for the minimum next detail.`
 }
 
+async function sendRelevantProductImages(incoming, products) {
+  const productsToSend = findProductsForMessage(products, incoming.text)
+    .filter((product) => product.image?.data && product.image?.mimetype)
+    .slice(0, 3)
+
+  for (const product of productsToSend) {
+    await sendWhatsAppImage(incoming.chatId, product, incoming.session)
+    await appendConversationEvent({
+      id: `${incoming.id}-image-${product.id}`,
+      chatId: incoming.chatId,
+      customerName: incoming.customerName,
+      direction: 'assistant',
+      text: `Sent product image: ${product.name}`,
+      status: 'sent',
+    })
+  }
+}
+
 async function sendWhatsAppText(chatId, text, session) {
   const response = await fetch(`${config.wahaBaseUrl}/api/sendText`, {
     method: 'POST',
@@ -236,6 +261,31 @@ async function sendWhatsAppText(chatId, text, session) {
   if (!response.ok) {
     const body = await response.text()
     throw new Error(`WAHA sendText failed: ${response.status} ${body}`)
+  }
+}
+
+async function sendWhatsAppImage(chatId, product, session) {
+  const response = await fetch(`${config.wahaBaseUrl}/api/sendImage`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Api-Key': config.wahaApiKey,
+    },
+    body: JSON.stringify({
+      chatId,
+      session: session || config.wahaSession,
+      file: {
+        mimetype: product.image.mimetype,
+        data: product.image.data,
+        filename: product.image.filename || `${product.id}.jpg`,
+      },
+      caption: `${product.name}\nKES ${product.price}\n${product.available ? `${product.stock} in stock` : 'Sold out'}`,
+    }),
+  })
+
+  if (!response.ok) {
+    const body = await response.text()
+    throw new Error(`WAHA sendImage failed: ${response.status} ${body}`)
   }
 }
 
