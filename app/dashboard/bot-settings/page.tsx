@@ -20,6 +20,7 @@ export default async function BotSettingsPage() {
                : "MongoDB configured but not connected"
             : "Local JSON fallback",
       ],
+      ["Product pictures", `${status.products.withImages}/${status.products.total} uploaded`],
       ["Fallback", process.env.HUMAN_HANDOFF_MESSAGE || commerceBusinessProfile.handoff],
    ];
 

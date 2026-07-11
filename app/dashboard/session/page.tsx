@@ -33,6 +33,10 @@ export default async function SessionPage() {
                               : "Configured but not connected"
                            : "Using local JSON fallback",
                      ],
+                     [
+                        "Product pictures",
+                        `${status.products.withImages}/${status.products.total} uploaded`,
+                     ],
                   ].map(([label, value]) => (
                      <div key={label} className="rounded-xl border p-4">
                         <strong className="block">{label}</strong>

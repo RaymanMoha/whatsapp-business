@@ -35,6 +35,7 @@ export function ProductCatalogManager() {
    const [loading, setLoading] = React.useState(true);
    const [savingId, setSavingId] = React.useState("");
    const [notice, setNotice] = React.useState("");
+   const uploadedImageCount = products.filter((product) => Boolean(product.imageDataUrl)).length;
 
    async function loadProducts() {
       const response = await fetch("/api/commerce/products", { cache: "no-store" });
@@ -106,7 +107,19 @@ export function ProductCatalogManager() {
    return (
       <Card className="text-black dark:text-black">
          <CardHeader>
-            <CardTitle>Available products</CardTitle>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+               <div>
+                  <CardTitle>Available products</CardTitle>
+                  <p className="mt-2 text-sm text-zinc-500">
+                     {uploadedImageCount}/{products.length} products have pictures. The bot can only send pictures for products with uploaded images.
+                  </p>
+               </div>
+               {products.length > 0 && uploadedImageCount === 0 ? (
+                  <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                     No pictures uploaded
+                  </span>
+               ) : null}
+            </div>
          </CardHeader>
          <CardContent className="space-y-4">
             {notice ? <p className="rounded-xl bg-zinc-100 p-3 text-sm text-zinc-700">{notice}</p> : null}

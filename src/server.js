@@ -231,7 +231,12 @@ async function sendRelevantProductImages(incoming, products) {
     .filter((product) => product.image?.data && product.image?.mimetype)
     .slice(0, 3)
 
+  if (productsToSend.length === 0) {
+    return
+  }
+
   for (const product of productsToSend) {
+    console.log(`Sending product image to ${incoming.chatId}: ${product.name}`)
     await sendWhatsAppImage(incoming.chatId, product, incoming.session)
     await appendConversationEvent({
       id: `${incoming.id}-image-${product.id}`,
