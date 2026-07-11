@@ -2,6 +2,7 @@ import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
 import Heading from "@/components/heading";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { commerceQuestions } from "@/lib/commerce-data";
+import { LiveQuestions } from "@/components/commerce/live-questions";
 
 export default function QuestionsPage() {
    return (
@@ -13,17 +14,10 @@ export default function QuestionsPage() {
             />
             <Card className="text-black dark:text-black">
                <CardHeader>
-                  <CardTitle>Question review queue</CardTitle>
+                  <CardTitle>Live WhatsApp question queue</CardTitle>
                </CardHeader>
                <CardContent className="space-y-3">
-                  {commerceQuestions.map((question) => (
-                     <div key={question.id} className="rounded-xl border p-4">
-                        <strong className="block">{question.question}</strong>
-                        <p className="mt-1 text-sm text-zinc-600">
-                           {question.customer} · {question.status} · {question.time}
-                        </p>
-                     </div>
-                  ))}
+                  <LiveQuestions fallback={commerceQuestions} />
                </CardContent>
             </Card>
          </div>

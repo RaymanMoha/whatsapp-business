@@ -1,0 +1,75 @@
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import path from 'node:path'
+
+const dataDir = path.join(process.cwd(), 'data')
+const conversationsFile = path.join(dataDir, 'conversations.json')
+
+async function ensureStore() {
+  await mkdir(dataDir, { recursive: true })
+  try {
+    await readFile(conversationsFile, 'utf8')
+  } catch {
+    await writeFile(conversationsFile, JSON.stringify({ threads: [] }, null, 2))
+  }
+}
+
+export async function readConversationThreads() {
+  await ensureStore()
+  const raw = await readFile(conversationsFile, 'utf8')
+  const parsed = JSON.parse(raw)
+  return Array.isArray(parsed.threads) ? parsed.threads : []
+}
+
+export async function appendConversationEvent(event) {
+  await ensureStore()
+  const threads = await readConversationThreads()
+  const now = new Date().toISOString()
+  const chatId = String(event.chatId)
+  const existing = threads.find((thread) => thread.chatId === chatId)
+  const message = {
+    id: String(event.id || `${chatId}-${Date.now()}`),
+    direction: event.direction,
+    text: String(event.text || '').slice(0, 4000),
+    status: event.status || 'received',
+    timestamp: event.timestamp || now,
+  }
+
+  if (existing) {
+    existing.customerName = event.customerName || existing.customerName || chatId
+    existing.updatedAt = now
+    existing.messages = [...(existing.messages || []), message].slice(-80)
+  } else {
+    threads.push({
+      id: `thread-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      chatId,
+      customerName: event.customerName || chatId,
+      createdAt: now,
+      updatedAt: now,
+      messages: [message],
+    })
+  }
+
+  threads.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+  await writeFile(conversationsFile, JSON.stringify({ threads: threads.slice(0, 200) }, null, 2))
+}
+
+export async function listConversationSummaries() {
+  const threads = await readConversationThreads()
+  return threads.map((thread) => {
+    const messages = thread.messages || []
+    const lastMessage = messages[messages.length - 1]
+    const lastInbound = [...messages].reverse().find((message) => message.direction === 'inbound')
+    const lastAssistant = [...messages].reverse().find((message) => message.direction === 'assistant')
+
+    return {
+      id: thread.id,
+      chatId: thread.chatId,
+      customerName: thread.customerName || thread.chatId,
+      updatedAt: thread.updatedAt,
+      lastQuestion: lastInbound?.text || lastMessage?.text || '',
+      lastReply: lastAssistant?.text || '',
+      status: lastAssistant ? 'Replied by AI' : 'Needs reply',
+      messageCount: messages.length,
+    }
+  })
+}

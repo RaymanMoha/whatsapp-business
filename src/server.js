@@ -3,6 +3,7 @@ import 'dotenv/config'
 import express from 'express'
 import { products } from './catalog.js'
 import { approvedKnowledge, businessProfile } from './knowledge.js'
+import { appendConversationEvent } from './message-store.js'
 
 const app = express()
 
@@ -49,11 +50,35 @@ app.post('/webhook', async (request, response) => {
   if (!config.replyToGroups && incoming.chatId.endsWith('@g.us')) return
 
   try {
+    await appendConversationEvent({
+      id: incoming.id,
+      chatId: incoming.chatId,
+      customerName: incoming.customerName,
+      direction: 'inbound',
+      text: incoming.text,
+      status: 'received',
+    })
     const reply = await buildReply(incoming)
     await sendWhatsAppText(incoming.chatId, reply, incoming.session)
+    await appendConversationEvent({
+      id: `${incoming.id}-reply`,
+      chatId: incoming.chatId,
+      customerName: incoming.customerName,
+      direction: 'assistant',
+      text: reply,
+      status: 'sent',
+    })
     rememberConversation(incoming.chatId, incoming.text, reply)
   } catch (error) {
     console.error('Failed to handle WhatsApp message:', error)
+    await appendConversationEvent({
+      id: `${incoming.id}-error`,
+      chatId: incoming.chatId,
+      customerName: incoming.customerName,
+      direction: 'system',
+      text: config.humanHandoffMessage,
+      status: 'failed',
+    }).catch(() => {})
     await sendWhatsAppText(incoming.chatId, config.humanHandoffMessage, incoming.session).catch(
       (sendError) => {
         console.error('Failed to send handoff message:', sendError)
@@ -96,6 +121,12 @@ function extractIncomingMessage(body) {
   const id = payload?.id?._serialized || payload?.id || payload?._data?.id?.id || `${chatId}-${Date.now()}`
   const fromMe = Boolean(payload?.fromMe || payload?.id?.fromMe || payload?._data?.id?.fromMe)
   const session = payload?.session || body?.session || config.wahaSession
+  const customerName =
+    payload?.notifyName ||
+    payload?.pushName ||
+    payload?.contact?.pushName ||
+    payload?._data?.notifyName ||
+    chatId
 
   if (!chatId || !text) return null
 
@@ -105,6 +136,7 @@ function extractIncomingMessage(body) {
     session: String(session),
     text: String(text).trim(),
     fromMe,
+    customerName: String(customerName),
   }
 }
 

@@ -2,6 +2,7 @@ node_modules/
 .next/
 .env
 .waha-sessions/
+data/conversations.json
 qr-default*.png
 tsconfig.tsbuildinfo
 npm-debug.log*
