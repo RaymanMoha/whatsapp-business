@@ -1,6 +1,6 @@
 import type React from "react";
 import Image from "next/image";
-import Bg from "@/public/hero2.jpg";
+import Bg from "@/public/auth-commerce-ai.webp";
 import Logo from "@/public/whatsapp-commerce-logo.svg";
 import ParternBg from "@/public/pattern-bg.png";
 
@@ -23,7 +23,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
             <div className="relative w-full h-full rounded-[30px] overflow-hidden">
                <Image
                   src={Bg.src}
-                  alt="Person with colorful lighting effects representing innovation and creativity"
+                  alt="AI WhatsApp commerce conversation helping a customer choose a product"
                   fill
                   className="object-cover rounded-r-3xl"
                   priority
