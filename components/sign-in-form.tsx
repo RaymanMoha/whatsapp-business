@@ -38,6 +38,7 @@ export function SignInForm({
    });
 
    const [submitting, setSubmitting] = React.useState(false);
+   const [authError, setAuthError] = React.useState("");
    const router = useRouter();
    const searchParams = useSearchParams();
    const nextPath = searchParams.get("next");
@@ -53,18 +54,21 @@ export function SignInForm({
    async function handleSubmit(values: SignInValues) {
       try {
          setSubmitting(true);
-         console.log("Signing in with:", { email: values.email });
+         setAuthError("");
          const res = (onSubmit
             ? await onSubmit(values)
-            : await signInAction(values)) as unknown as { ok?: boolean } | void;
-         console.log("Sign in response:", res);
+            : await signInAction(values)) as unknown as { ok?: boolean; error?: string } | void;
+
+         if (res && res.ok === false) {
+            setAuthError(res.error || "Sign in failed.");
+            return;
+         }
          
          const redirectPath = getSafeRedirectPath();
-         console.log("Redirecting to:", redirectPath);
          router.push(redirectPath);
       } catch (error) {
          console.error("Sign in error:", error);
-         router.push(getSafeRedirectPath());
+         setAuthError("Sign in failed. Please try again.");
       } finally {
          setSubmitting(false);
       }
@@ -143,6 +147,11 @@ export function SignInForm({
                   disabled={submitting}>
                   {submitting ? "Signing in…" : "Sign in to dashboard"}
                </Button>
+               {authError ? (
+                  <p role="alert" className="rounded-xl border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-200">
+                     {authError}
+                  </p>
+               ) : null}
             </form>
          </Form>
 

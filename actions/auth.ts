@@ -93,20 +93,30 @@ export async function signUpAction(values: SignUpValues) {
 }
 
 export async function signInAction(values: SignInValues) {
-  // Skip validation - accept anything
-  const email = values.email || "demo@example.com"
-  const password = values.password || "demo"
+  const parsed = SignInSchema.safeParse(values)
+  if (!parsed.success) {
+    return { ok: false, error: "Enter a valid email and password." }
+  }
 
-  // Always create a user object regardless of input
+  const adminEmail = process.env.DASHBOARD_ADMIN_EMAIL?.trim().toLowerCase()
+  const adminPasswordHash = process.env.DASHBOARD_ADMIN_PASSWORD_HASH?.trim().toLowerCase()
+  const suppliedHash = hashPassword(parsed.data.password)
+  const emailMatches = Boolean(adminEmail) && parsed.data.email.trim().toLowerCase() === adminEmail
+  const hashMatches = Boolean(adminPasswordHash) && suppliedHash.length === adminPasswordHash?.length &&
+    crypto.timingSafeEqual(Buffer.from(suppliedHash), Buffer.from(adminPasswordHash || ""))
+
+  if (!emailMatches || !hashMatches) {
+    return { ok: false, error: "Incorrect email or password." }
+  }
+
   const user = {
-    id: crypto.randomUUID(),
-    fullName: "Demo User",
-    email: email,
-    passwordHash: hashPassword(password),
+    id: crypto.createHash("sha256").update(adminEmail || "admin").digest("hex").slice(0, 32),
+    fullName: process.env.DASHBOARD_ADMIN_NAME || "Store Admin",
+    email: parsed.data.email,
+    passwordHash: suppliedHash,
     createdAt: new Date().toISOString(),
   }
 
-  // Set session cookie for any user
   await setSessionCookie(user)
   return { ok: true, user: { id: user.id, fullName: user.fullName, email: user.email } }
 }

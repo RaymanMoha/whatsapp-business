@@ -1,0 +1,11 @@
+.env
+.env.*
+.waha-sessions
+data
+tmp
+deploy
+Dockerfile
+docker-compose*.yml
+Caddyfile
+README*.png
+npm-debug.log*

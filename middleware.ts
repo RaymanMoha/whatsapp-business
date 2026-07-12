@@ -19,6 +19,13 @@ async function hasValidSession(req: NextRequest) {
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
   const isAuthed = await hasValidSession(req)
+  const isProtectedApi =
+    (pathname.startsWith("/api/commerce") && pathname !== "/api/commerce/payments/callback") ||
+    pathname === "/api/chat"
+
+  if (isProtectedApi && !isAuthed) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
 
   // Protect dashboard
   if (pathname.startsWith("/dashboard")) {
@@ -46,5 +53,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/signin", "/dashboard/:path*"],
+  matcher: ["/", "/signin", "/dashboard/:path*", "/api/chat", "/api/commerce/:path*"],
 }

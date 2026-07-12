@@ -9,3 +9,4 @@ qr-default*.png
 tsconfig.tsbuildinfo
 npm-debug.log*
 .DS_Store
+.vercel
