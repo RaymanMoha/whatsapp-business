@@ -42,7 +42,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
                </div>
                <div className="absolute bottom-8 left-8 right-8">
                   <h2
-                     className="text-white text-5xl leading-tight mb-2"
+                     className="text-white text-[54px] leading-[0.95] mb-3 tracking-[-0.03em]"
                      style={{ fontFamily: "var(--calson-font)" }}>
                      Sell through{" "}
                      <span
@@ -53,7 +53,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
                      with
                   </h2>
                   <p
-                     className="text-5xl leading-tight text-white"
+                     className="text-[54px] leading-[0.95] text-white tracking-[-0.03em]"
                      style={{ fontFamily: "var(--calson-font)" }}>
                      <span
                         className="text-emerald-400 "
