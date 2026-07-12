@@ -12,9 +12,13 @@ type OrderIntent = {
    replyPreview: string;
 };
 
-export function LiveOrders() {
-   const [orders, setOrders] = React.useState<OrderIntent[]>([]);
-   const [loaded, setLoaded] = React.useState(false);
+export function LiveOrders({
+   initialOrders = [],
+}: {
+   initialOrders?: OrderIntent[];
+}) {
+   const [orders, setOrders] = React.useState<OrderIntent[]>(initialOrders);
+   const [loaded, setLoaded] = React.useState(initialOrders.length > 0);
 
    React.useEffect(() => {
       let cancelled = false;
@@ -32,13 +36,13 @@ export function LiveOrders() {
          }
       }
 
-      load();
+      if (initialOrders.length === 0) load();
       const interval = window.setInterval(load, 5000);
       return () => {
          cancelled = true;
          window.clearInterval(interval);
       };
-   }, []);
+   }, [initialOrders.length]);
 
    if (!loaded) {
       return <p className="text-sm text-zinc-500">Loading order intent…</p>;

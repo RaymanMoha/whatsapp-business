@@ -82,6 +82,7 @@ export function SignInForm({
             fill
             className="absolute inset-0 w-full h-full object-cover pointer-events-none"
             style={{ zIndex: 0, objectFit: "cover", opacity: 0.8 }}
+            sizes="(max-width: 1024px) 100vw, 448px"
          />
          <div className="mb-12 text-center">
             <h1 className="text-white text-2xl font-semibold mb-2">

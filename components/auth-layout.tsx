@@ -10,13 +10,15 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ children }: AuthLayoutProps) {
    return (
-      <div className="min-h-screen bg-black flex p-4">
+      <div className="relative min-h-screen bg-black flex p-4">
          <Image
             src={ParternBg.src}
             alt=""
             fill
             className="absolute inset-0 w-full h-full object-cover pointer-events-none"
             style={{ zIndex: 0, objectFit: "cover", opacity: 0.8 }}
+            sizes="100vw"
+            priority
          />
          {/* Left side - Hero Image */}
          <div className="hidden lg:flex lg:w-1/2 relative">
@@ -27,6 +29,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
                   fill
                   className="object-cover rounded-r-3xl"
                   priority
+                  sizes="50vw"
                />
                {/* Overlay content */}
                <div className="absolute inset-0 bg-gradient-to-bl from-black/70 via-transparent to-black/90 rounded-r-3xl" />
@@ -35,8 +38,8 @@ export function AuthLayout({ children }: AuthLayoutProps) {
                      src={Logo.src}
                      alt="WhatsApp Commerce Hub logo"
                      width={150}
-                     height={50}
-                     className="object-cover"
+                     height={41}
+                     className="object-contain"
                      priority
                   />
                </div>

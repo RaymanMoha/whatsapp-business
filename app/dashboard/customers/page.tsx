@@ -2,8 +2,11 @@ import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
 import { LiveCustomers } from "@/components/commerce/live-customers";
 import Heading from "@/components/heading";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { listCustomerSummaries } from "@/src/customer-store";
 
-export default function CustomersPage() {
+export default async function CustomersPage() {
+   const customers = await listCustomerSummaries();
+
    return (
       <DashboardLayout>
          <div className="space-y-6">
@@ -16,7 +19,7 @@ export default function CustomersPage() {
                   <CardTitle>Live WhatsApp customers</CardTitle>
                </CardHeader>
                <CardContent>
-                  <LiveCustomers />
+                  <LiveCustomers initialCustomers={customers} />
                </CardContent>
             </Card>
          </div>

@@ -2,8 +2,11 @@ import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
 import { LiveOrders } from "@/components/commerce/live-orders";
 import Heading from "@/components/heading";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { listOrderIntents } from "@/src/customer-store";
 
-export default function OrdersPage() {
+export default async function OrdersPage() {
+   const orders = await listOrderIntents();
+
    return (
       <DashboardLayout>
          <div className="space-y-6">
@@ -16,7 +19,7 @@ export default function OrdersPage() {
                   <CardTitle>Live order intent</CardTitle>
                </CardHeader>
                <CardContent>
-                  <LiveOrders />
+                  <LiveOrders initialOrders={orders} />
                </CardContent>
             </Card>
          </div>

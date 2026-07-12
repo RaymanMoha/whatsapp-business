@@ -97,6 +97,7 @@ export function Sidebar({
             fill
             className="absolute inset-0 w-full h-full object-cover pointer-events-none"
             style={{ zIndex: 0, objectFit: "cover", opacity: 0.8 }}
+            sizes="18rem"
          />
          <div
             className={`flex items-center justify-between gap-2 ${
@@ -108,9 +109,8 @@ export function Sidebar({
                      src={Logo.src}
                      alt="WhatsApp Commerce Hub logo"
                      width={180}
-                     height={50}
-                     className="object-cover"
-                     priority
+                     height={49}
+                     className="object-contain"
                   />
                </Link>
             )}

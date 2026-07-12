@@ -45,6 +45,7 @@ export function DashboardLayout({
             fill
             className="absolute inset-0 w-full h-full object-cover pointer-events-none"
             style={{ zIndex: 0, objectFit: "cover", opacity: 0.8 }}
+            sizes="100vw"
          />
 
          {/* Static sidebar on md+ */}
@@ -58,6 +59,7 @@ export function DashboardLayout({
                   fill
                   className="absolute inset-0 w-full h-full object-cover pointer-events-none"
                   style={{ zIndex: 0, objectFit: "cover", opacity: 0.8 }}
+                  sizes="(max-width: 768px) 100vw, calc(100vw - 18rem)"
                />
                {/* Mobile menu toggle */}
                <div className="absolute left-6 top-6 md:hidden z-20">

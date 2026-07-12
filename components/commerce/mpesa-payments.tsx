@@ -27,10 +27,16 @@ type MpesaStatus = {
    callbackUrl?: string | null;
 };
 
-export function MpesaPayments() {
-   const [payments, setPayments] = React.useState<Payment[]>([]);
-   const [mpesa, setMpesa] = React.useState<MpesaStatus | null>(null);
-   const [loading, setLoading] = React.useState(true);
+export function MpesaPayments({
+   initialMpesa = null,
+   initialPayments = [],
+}: {
+   initialMpesa?: MpesaStatus | null;
+   initialPayments?: Payment[];
+}) {
+   const [payments, setPayments] = React.useState<Payment[]>(initialPayments);
+   const [mpesa, setMpesa] = React.useState<MpesaStatus | null>(initialMpesa);
+   const [loading, setLoading] = React.useState(!initialMpesa);
    const [submitting, setSubmitting] = React.useState(false);
    const [notice, setNotice] = React.useState("");
    const [form, setForm] = React.useState({
@@ -74,11 +80,12 @@ export function MpesaPayments() {
    }
 
    React.useEffect(() => {
+      if (initialMpesa) return;
       loadPayments().catch(() => {
          setLoading(false);
          setNotice("Payments could not load.");
       });
-   }, []);
+   }, [initialMpesa]);
 
    return (
       <div className="grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">

@@ -166,7 +166,7 @@ export function HelperChat() {
                   aria-label="Open helper chat"
                   onClick={() => openPanel()}
                   className="relative rounded-full bg-[#E0B5FF] hover:bg-[#C380FF] shadow-lg transition-transform active:scale-95 hover:scale-[1.03] w-14 h-14 flex items-center justify-center overflow-hidden">
-                  <Image src={Logo.src} alt="Reon Capital" width={56} height={56} className="object-cover rounded-full w-full h-full" />
+                  <Image src={Logo.src} alt="Reon Capital" width={56} height={56} className="h-full w-full rounded-full object-cover" />
                   {unread > 0 ? (
                     <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-red-600 text-white text-[10px] flex items-center justify-center">{unread}</span>
                   ) : null}
@@ -188,12 +188,12 @@ export function HelperChat() {
             `absolute bottom-6 right-6 h-[70vh] w-[92vw] sm:w-[420px] bg-white text-black shadow-2xl flex flex-col ${open ? 'animate-helper-slide-in' : 'animate-helper-slide-out'} rounded-2xl overflow-hidden`
           }>
             <div className="absolute inset-0 pointer-events-none opacity-80">
-              <Image src={ParternBg.src} alt="" fill className="object-cover" />
+              <Image src={ParternBg.src} alt="" fill className="object-cover" sizes="(max-width: 640px) 92vw, 420px" />
             </div>
             <header className="relative flex items-center justify-between px-4 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center overflow-hidden">
-                  <Image src={Logo.src} alt="Reon Capital" width={32} height={32} className="object-cover rounded-full w-full h-full" />
+                  <Image src={Logo.src} alt="Reon Capital" width={32} height={32} className="h-full w-full rounded-full object-cover" />
                 </div>
                 <span className="font-semibold">Reon Capital Assistant</span>
               </div>

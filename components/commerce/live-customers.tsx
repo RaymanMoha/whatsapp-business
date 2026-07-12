@@ -15,9 +15,13 @@ type Customer = {
    status: string;
 };
 
-export function LiveCustomers() {
-   const [customers, setCustomers] = React.useState<Customer[]>([]);
-   const [loaded, setLoaded] = React.useState(false);
+export function LiveCustomers({
+   initialCustomers = [],
+}: {
+   initialCustomers?: Customer[];
+}) {
+   const [customers, setCustomers] = React.useState<Customer[]>(initialCustomers);
+   const [loaded, setLoaded] = React.useState(initialCustomers.length > 0);
 
    React.useEffect(() => {
       let cancelled = false;
@@ -35,13 +39,13 @@ export function LiveCustomers() {
          }
       }
 
-      load();
+      if (initialCustomers.length === 0) load();
       const interval = window.setInterval(load, 5000);
       return () => {
          cancelled = true;
          window.clearInterval(interval);
       };
-   }, []);
+   }, [initialCustomers.length]);
 
    if (!loaded) {
       return <p className="text-sm text-zinc-500">Loading customers…</p>;

@@ -30,9 +30,13 @@ function formatPrice(value: number) {
    }).format(value);
 }
 
-export function ProductCatalogManager() {
-   const [products, setProducts] = React.useState<Product[]>([]);
-   const [loading, setLoading] = React.useState(true);
+export function ProductCatalogManager({
+   initialProducts = [],
+}: {
+   initialProducts?: Product[];
+}) {
+   const [products, setProducts] = React.useState<Product[]>(initialProducts);
+   const [loading, setLoading] = React.useState(initialProducts.length === 0);
    const [savingId, setSavingId] = React.useState("");
    const [notice, setNotice] = React.useState("");
    const uploadedImageCount = products.filter((product) => Boolean(product.imageDataUrl)).length;
@@ -98,11 +102,12 @@ export function ProductCatalogManager() {
    }
 
    React.useEffect(() => {
+      if (initialProducts.length > 0) return;
       loadProducts().catch(() => {
          setLoading(false);
          setNotice("Products could not load.");
       });
-   }, []);
+   }, [initialProducts.length]);
 
    return (
       <Card className="text-black dark:text-black">
