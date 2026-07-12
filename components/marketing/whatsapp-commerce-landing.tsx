@@ -1,21 +1,13 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import {
    ArrowRight,
-   Bot,
-   CheckCircle2,
-   CreditCard,
-   Image as ImageIcon,
-   MessageCircle,
-   Package,
-   ReceiptText,
-   Send,
-   ShieldCheck,
    Sparkles,
-   Users,
    Zap,
 } from "lucide-react";
+import AuthCommerceImage from "@/public/auth-commerce-ai.webp";
 
 const commerceTicker = [
    "Product pictures",
@@ -55,27 +47,39 @@ const steps = [
    },
 ];
 
-const features = [
+const productVisuals = [
    {
-      icon: ImageIcon,
-      title: "Visual product catalog",
-      desc: "Upload product pictures and let shoppers see what is available before they commit.",
+      name: "California Set",
+      price: "KES 1,500",
+      stock: "8 in stock",
+      status: "Available",
    },
    {
-      icon: Bot,
-      title: "AI replies from approved info",
-      desc: "The assistant answers from your configured products, policies, and templates instead of guessing.",
+      name: "Mini Pathos",
+      price: "KES 900",
+      stock: "3 left",
+      status: "Low stock",
    },
    {
-      icon: CreditCard,
-      title: "M-Pesa payment flow",
-      desc: "Trigger STK push from WhatsApp and store payment status, receipt, product, and customer context.",
+      name: "Lavender Candle",
+      price: "KES 249",
+      stock: "Ready",
+      status: "Available",
    },
-   {
-      icon: Users,
-      title: "Customer visibility",
-      desc: "Track who asked what, what they wanted, and whether the conversation needs human follow-up.",
-   },
+];
+
+const workbenchRows = [
+   ["Amina N.", "Mini Pathos", "Asked for pictures", "AI handled", "Now"],
+   ["Kevin M.", "California Set", "Payment pending", "STK sent", "2m"],
+   ["Njeri S.", "Green Tea", "Needs human reply", "Review", "8m"],
+];
+
+const journey = [
+   ["Message received", "Customer asks what is available today."],
+   ["Catalog matched", "AI pulls only products with price, stock, and approved description."],
+   ["Product shown", "Pictures and short buying options are sent back in WhatsApp."],
+   ["Payment started", "M-Pesa STK push is initiated and the record is saved."],
+   ["Follow-up ready", "Dashboard shows the customer, product, receipt, and next action."],
 ];
 
 function ContourBackground() {
@@ -137,42 +141,110 @@ function LogoMark({ size = 40 }: { size?: number }) {
    );
 }
 
-function ChatPreview() {
+function MerchantOperatingDesk() {
    return (
-      <div className="relative mx-auto w-full max-w-[430px] rounded-[32px] border border-black/10 bg-[#f2ede3] p-3 shadow-[0_30px_90px_rgba(0,0,0,.18)]">
-         <div className="rounded-t-[24px] bg-white p-4">
-            <div className="flex items-center justify-between">
-               <div>
-                  <p className="text-sm font-bold text-[#0a0a0a]">Amina from WhatsApp</p>
-                  <p className="text-xs font-semibold text-emerald-600">Online · wants to buy</p>
+      <div className="relative">
+         <div className="absolute -inset-8 rounded-[48px] bg-gradient-to-br from-emerald-400/10 via-transparent to-black/5 blur-2xl" />
+         <div className="relative overflow-hidden rounded-[38px] border border-black/[0.07] bg-[#fbfbf8] shadow-[0_30px_100px_rgba(0,0,0,.12)]">
+            <div className="grid gap-0 lg:grid-cols-[1.05fr_.95fr]">
+               <div className="border-b border-black/[0.06] p-5 lg:border-b-0 lg:border-r">
+                  <div className="mb-5 flex items-center justify-between">
+                     <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-800">Commerce desk</p>
+                        <h3 className="mt-1 text-2xl font-semibold tracking-[-0.04em]">Today&apos;s conversations</h3>
+                     </div>
+                     <div className="rounded-full bg-[#0a0a0a] px-4 py-2 text-xs font-bold text-white">12 active</div>
+                  </div>
+                  <div className="space-y-2">
+                     {workbenchRows.map(([name, product, intent, status, time], index) => (
+                        <div
+                           key={name}
+                           className={`grid grid-cols-[1fr_auto] gap-3 rounded-3xl p-4 transition ${index === 1 ? "bg-[#0f1411] text-white shadow-[0_14px_40px_rgba(0,0,0,.16)]" : "bg-white text-black"}`}>
+                           <div>
+                              <div className="flex items-center gap-3">
+                                 <span className={`grid size-10 place-items-center rounded-2xl text-sm font-bold ${index === 1 ? "bg-emerald-300 text-emerald-950" : "bg-emerald-50 text-emerald-800"}`}>
+                                    {name.split(" ").map((part) => part[0]).join("")}
+                                 </span>
+                                 <div>
+                                    <p className="text-sm font-bold">{name}</p>
+                                    <p className={`text-xs ${index === 1 ? "text-white/55" : "text-black/45"}`}>{product}</p>
+                                 </div>
+                              </div>
+                              <p className={`mt-3 text-sm ${index === 1 ? "text-white/78" : "text-black/58"}`}>{intent}</p>
+                           </div>
+                           <div className="text-right">
+                              <p className={`text-xs font-bold ${index === 1 ? "text-emerald-300" : "text-emerald-800"}`}>{status}</p>
+                              <p className={`mt-1 text-xs ${index === 1 ? "text-white/35" : "text-black/35"}`}>{time}</p>
+                           </div>
+                        </div>
+                     ))}
+                  </div>
                </div>
-               <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">AI</span>
+
+               <div className="p-5">
+                  <div className="relative mb-5 overflow-hidden rounded-[30px] bg-[#0f1411] p-4 text-white">
+                     <Image
+                        src={AuthCommerceImage}
+                        alt="AI-assisted WhatsApp product conversation"
+                        className="absolute inset-0 h-full w-full object-cover opacity-45"
+                        sizes="(max-width: 1024px) 100vw, 520px"
+                     />
+                     <div className="absolute inset-0 bg-gradient-to-t from-[#0f1411] via-[#0f1411]/35 to-transparent" />
+                     <div className="relative min-h-[210px] content-end">
+                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-200">Customer-facing</p>
+                        <h3 className="mt-2 max-w-xs text-3xl font-semibold leading-tight tracking-[-0.05em]">
+                           Product pictures are part of the answer.
+                        </h3>
+                     </div>
+                  </div>
+                  <div className="overflow-hidden rounded-[26px] border border-black/[0.07] bg-white">
+                     <div className="grid grid-cols-[1fr_auto_auto] gap-4 border-b border-black/[0.06] px-4 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-black/35">
+                        <span>Catalogue</span>
+                        <span>Stock</span>
+                        <span>Price</span>
+                     </div>
+                     {productVisuals.map((product) => (
+                        <div key={product.name} className="grid grid-cols-[1fr_auto_auto] items-center gap-4 border-b border-black/[0.06] px-4 py-4 last:border-b-0">
+                           <div>
+                              <p className="text-sm font-bold tracking-[-0.02em]">{product.name}</p>
+                              <p className="mt-0.5 text-[11px] font-semibold text-emerald-800">{product.status}</p>
+                           </div>
+                           <p className="text-xs text-black/45">{product.stock}</p>
+                           <p className="text-sm font-bold tabular-nums text-black">{product.price}</p>
+                        </div>
+                     ))}
+                  </div>
+               </div>
             </div>
          </div>
-         <div className="space-y-3 p-4">
-            <div className="max-w-[82%] rounded-2xl bg-white p-3 text-sm text-black shadow-sm">
-               Do you have the California set today?
+      </div>
+   );
+}
+
+function PaymentJourney() {
+   return (
+      <div className="relative rounded-[38px] border border-white/10 bg-white/[0.04] p-4 shadow-[0_30px_90px_rgba(0,0,0,.22)]">
+         <div className="rounded-[30px] bg-[#f5f1e8] p-4 text-black">
+            <div className="flex items-center justify-between border-b border-black/10 pb-4">
+               <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-800">Live order path</p>
+                  <p className="mt-1 text-xl font-semibold tracking-[-0.04em]">Kevin · California Set</p>
+               </div>
+               <div className="rounded-full bg-[#DCF8C6] px-4 py-2 text-xs font-bold text-emerald-900">STK sent</div>
             </div>
-            <div className="ml-auto max-w-[88%] rounded-2xl bg-[#DCF8C6] p-3 text-sm text-black shadow-sm">
-               Yes. California Set is available for KES 1,500. I can show pictures or start payment.
-            </div>
-            <div className="grid grid-cols-2 gap-2 rounded-3xl bg-white p-2 shadow-sm">
-               {[
-                  ["California Set", "KES 1,500", "In stock"],
-                  ["Mini Pathos", "KES 900", "3 left"],
-               ].map(([name, price, stock]) => (
-                  <div key={name} className="rounded-2xl border border-black/5 bg-[#fbfbf9] p-2">
-                     <div className="grid h-24 place-items-center rounded-xl bg-gradient-to-br from-emerald-100 to-lime-50">
-                        <Package className="size-9 text-emerald-700" />
+            <div className="relative mt-5 space-y-0">
+               <div className="absolute bottom-6 left-[17px] top-6 w-px bg-emerald-900/15" />
+               {journey.map(([title, desc], index) => (
+                  <div key={title} className="relative grid grid-cols-[36px_1fr] gap-4 pb-5 last:pb-0">
+                     <div className={`relative z-10 grid size-9 place-items-center rounded-full border ${index < 4 ? "border-emerald-700 bg-emerald-700 text-white" : "border-black/15 bg-white text-black/45"}`}>
+                        <span className="text-xs font-bold">{index + 1}</span>
                      </div>
-                     <p className="mt-2 text-xs font-bold text-black">{name}</p>
-                     <p className="text-xs text-black/55">{price} · {stock}</p>
+                     <div className="rounded-3xl bg-white p-4 shadow-sm">
+                        <p className="text-sm font-bold tracking-[-0.02em]">{title}</p>
+                        <p className="mt-1 text-sm leading-6 text-black/55">{desc}</p>
+                     </div>
                   </div>
                ))}
-            </div>
-            <div className="ml-auto flex max-w-[88%] items-center gap-2 rounded-2xl bg-[#DCF8C6] p-3 text-sm text-black shadow-sm">
-               <CreditCard className="size-4 text-emerald-700" />
-               STK push sent to 2547•••2501
             </div>
          </div>
       </div>
@@ -263,27 +335,22 @@ export function WhatsappCommerceLanding() {
          </section>
 
          <section id="platform" className="relative bg-[#f0f0ed] px-5 py-28">
-            <div className="mx-auto grid max-w-6xl items-center gap-14 lg:grid-cols-[1fr_440px]">
-               <div>
+            <div className="mx-auto max-w-6xl">
+               <div className="grid items-end gap-8 lg:grid-cols-[.95fr_.75fr]">
+                  <div>
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-emerald-800">Platform</p>
                   <h2 className="mt-4 max-w-3xl text-5xl font-medium leading-[1.02] tracking-[-0.05em] md:text-7xl">
-                     Your shop, your inbox, and your payments in one place.
+                     Built around the moment a customer is ready to buy.
                   </h2>
-                  <p className="mt-6 max-w-2xl text-lg leading-8 text-black/60">
-                     The dashboard is designed around what a merchant needs during a real conversation:
-                     what is available, what the customer wants, whether payment started, and what the AI said.
-                  </p>
-                  <div className="mt-10 grid gap-4 sm:grid-cols-2">
-                     {features.map((feature) => (
-                        <div key={feature.title} className="rounded-3xl border border-black/[0.06] bg-white p-5 shadow-[0_8px_30px_rgba(0,0,0,.04)]">
-                           <feature.icon className="size-6 text-emerald-700" />
-                           <h3 className="mt-4 text-lg font-bold tracking-[-0.03em]">{feature.title}</h3>
-                           <p className="mt-2 text-sm leading-6 text-black/55">{feature.desc}</p>
-                        </div>
-                     ))}
                   </div>
+                  <p className="max-w-xl text-lg leading-8 text-black/60 lg:pb-2">
+                     Most WhatsApp selling breaks because product info, customer intent, and payment status live in different places.
+                     This interface keeps those decisions beside the conversation.
+                  </p>
                </div>
-               <ChatPreview />
+               <div className="mt-14">
+                  <MerchantOperatingDesk />
+               </div>
             </div>
          </section>
 
@@ -315,29 +382,14 @@ export function WhatsappCommerceLanding() {
                <div>
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-emerald-300">Payments</p>
                   <h2 className="mt-4 text-5xl font-medium leading-[1.03] tracking-[-0.05em] md:text-7xl">
-                     Customers can move from interest to paid without leaving chat.
+                     Payment is not a separate feature. It is the next state of the conversation.
                   </h2>
                   <p className="mt-6 max-w-xl text-lg leading-8 text-white/60">
                      The bot can collect the phone number, initiate STK push, record the transaction,
                      and notify the customer when payment is confirmed.
                   </p>
                </div>
-               <div className="grid gap-4">
-                  {[
-                     [MessageCircle, "Customer says: I want to pay"],
-                     [Send, "Bot asks for the right M-Pesa number"],
-                     [CreditCard, "STK push starts from Daraja sandbox/production config"],
-                     [ReceiptText, "Receipt and status are stored on the dashboard"],
-                     [CheckCircle2, "AI has recent payment context for follow-up"],
-                  ].map(([Icon, text]) => (
-                     <div key={text as string} className="flex items-center gap-4 rounded-3xl border border-white/10 bg-white/[0.04] p-5">
-                        <span className="grid size-12 place-items-center rounded-2xl bg-emerald-400/10">
-                           <Icon className="size-6 text-emerald-300" />
-                        </span>
-                        <span className="text-lg font-semibold tracking-[-0.025em]">{text as string}</span>
-                     </div>
-                  ))}
-               </div>
+               <PaymentJourney />
             </div>
          </section>
 
