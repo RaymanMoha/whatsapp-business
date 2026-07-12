@@ -4,7 +4,7 @@ import { getMpesaStatus, listPayments } from "@/src/mpesa-store";
 
 export async function GET() {
    return NextResponse.json({
-      mpesa: getMpesaStatus(),
+      mpesa: await getMpesaStatus(),
       payments: await listPayments(),
    });
 }

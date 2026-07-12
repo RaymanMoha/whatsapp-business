@@ -10,7 +10,7 @@
     "lint": "eslint",
     "bot:dev": "node --watch src/server.js",
     "bot:start": "node src/server.js",
-    "check": "node --check src/server.js && node --check src/cart.js && node --check src/cart-store.js && node --check src/knowledge.js && node --check src/catalog.js && node --check src/receipt.js && node --check src/receipt-store.js && npx tsc --noEmit",
+    "check": "node --check src/server.js && node --check src/cart.js && node --check src/cart-store.js && node --check src/settings-store.js && node --check src/knowledge.js && node --check src/catalog.js && node --check src/receipt.js && node --check src/receipt-store.js && npx tsc --noEmit",
     "test": "node --test src/*.test.js"
   },
   "dependencies": {

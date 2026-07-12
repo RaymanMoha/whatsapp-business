@@ -11,12 +11,14 @@ export async function getCommerceRuntimeStatus() {
    const { getMongoStatus } = await import("@/src/mongodb");
    const { readProducts } = await import("@/src/product-store");
    const { getMpesaStatus } = await import("@/src/mpesa-store");
-   const wahaBaseUrl = process.env.WAHA_BASE_URL || "http://localhost:3001";
-   const wahaApiKey = process.env.WAHA_API_KEY || "";
-   const sessionName = process.env.WAHA_SESSION || "default";
+   const { getRuntimeSettings } = await import("@/src/settings-store");
+   const runtime = await getRuntimeSettings();
+   const wahaBaseUrl = runtime.wahaBaseUrl;
+   const wahaApiKey = runtime.wahaApiKey;
+   const sessionName = runtime.wahaSession;
    const botBaseUrl = process.env.BOT_BASE_URL || `http://localhost:${process.env.PORT || 8080}`;
 
-   const [bot, waha, mongo, products] = await Promise.allSettled([
+   const [bot, waha, mongo, products, mpesa] = await Promise.allSettled([
       fetch(`${botBaseUrl}/health`, { cache: "no-store" }).then((response) =>
          response.ok ? response.json() : null,
       ),
@@ -26,6 +28,7 @@ export async function getCommerceRuntimeStatus() {
       }).then((response) => (response.ok ? response.json() : [])),
       getMongoStatus(),
       readProducts(),
+      getMpesaStatus(),
    ]);
 
    const botHealth = bot.status === "fulfilled" ? bot.value : null;
@@ -40,7 +43,7 @@ export async function getCommerceRuntimeStatus() {
       bot: {
          configured: Boolean(botHealth?.groqConfigured),
          online: Boolean(botHealth?.ok),
-         businessName: botHealth?.businessName || process.env.BUSINESS_NAME || "WhatsApp Store",
+         businessName: botHealth?.businessName || runtime.businessName,
       },
       waha: {
          online: Boolean(session),
@@ -50,8 +53,8 @@ export async function getCommerceRuntimeStatus() {
          pushName: session?.me?.pushName || null,
       },
       groq: {
-         configured: Boolean(process.env.GROQ_API_KEY),
-         model: process.env.GROQ_MODEL || "llama-3.1-8b-instant",
+         configured: Boolean(runtime.groqApiKey),
+         model: runtime.groqModel,
       },
       mongo:
          mongo.status === "fulfilled"
@@ -66,6 +69,16 @@ export async function getCommerceRuntimeStatus() {
          withImages: imageCount,
          withoutImages: Math.max(productList.length - imageCount, 0),
       },
-      mpesa: getMpesaStatus(),
+      mpesa:
+         mpesa.status === "fulfilled"
+            ? mpesa.value
+            : {
+                 configured: false,
+                 missing: ["M-Pesa settings unavailable"],
+                 environment: "unknown",
+                 shortCode: null,
+                 partyA: null,
+                 callbackUrl: null,
+              },
    };
 }

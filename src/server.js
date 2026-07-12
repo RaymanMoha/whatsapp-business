@@ -22,7 +22,8 @@ import { initiateStkPush } from './mpesa.js'
 import { getMpesaStatus, listRecentPaymentsForChat } from './mpesa-store.js'
 import { getMongoStatus } from './mongodb.js'
 import { findProductsForMessage, readProducts } from './product-store.js'
-import { sendWahaText } from './waha.js'
+import { getRuntimeSettings } from './settings-store.js'
+import { sendWahaImage, sendWahaText } from './waha.js'
 
 const app = express()
 
@@ -50,13 +51,14 @@ const pendingPayments = new Map()
 const seenMessageIds = new Set()
 
 app.get('/health', async (_request, response) => {
-  const mongo = await getMongoStatus()
-  const ok = Boolean(config.groqApiKey) && mongo.connected
+  const [mongo, runtime] = await Promise.all([getMongoStatus(), getRuntimeSettings({ fresh: true })])
+  const ok = Boolean(runtime.groqApiKey) && mongo.connected
   response.status(ok ? 200 : 503).json({
     ok,
     service: 'waha-groq-bot',
-    businessName: config.businessName,
-    groqConfigured: Boolean(config.groqApiKey),
+    businessName: runtime.businessName,
+    groqConfigured: Boolean(runtime.groqApiKey),
+    groqModel: runtime.groqModel,
     mongo,
   })
 })
@@ -103,15 +105,17 @@ app.post('/webhook', async (request, response) => {
     rememberConversation(incoming.chatId, incoming.text, reply)
   } catch (error) {
     console.error('Failed to handle WhatsApp message:', error)
+    const runtime = await getRuntimeSettings().catch(() => null)
+    const handoffMessage = runtime?.handoffMessage || config.humanHandoffMessage
     await appendConversationEvent({
       id: `${incoming.id}-error`,
       chatId: incoming.chatId,
       customerName: incoming.customerName,
       direction: 'system',
-      text: config.humanHandoffMessage,
+      text: handoffMessage,
       status: 'failed',
     }).catch(() => {})
-    await sendWhatsAppText(incoming.chatId, config.humanHandoffMessage, incoming.session).catch(
+    await sendWhatsAppText(incoming.chatId, handoffMessage, incoming.session).catch(
       (sendError) => {
         console.error('Failed to send handoff message:', sendError)
       },
@@ -283,7 +287,7 @@ async function buildPaymentReply(incoming, products) {
     return `${formatCartSummary(items)}\n\nSend the M-Pesa phone number, for example: "2547XXXXXXX".`
   }
 
-  const mpesa = getMpesaStatus()
+  const mpesa = await getMpesaStatus()
   if (!mpesa.configured) {
     return `M-Pesa is not fully configured yet. Missing: ${mpesa.missing.join(', ')}.`
   }
@@ -385,7 +389,8 @@ function normalizePaymentPhone(phone) {
 }
 
 async function buildReply(incoming, products) {
-  if (!config.groqApiKey) {
+  const runtime = await getRuntimeSettings()
+  if (!runtime.groqApiKey) {
     return 'The AI assistant is not configured yet. Add GROQ_API_KEY to .env and restart the bot.'
   }
 
@@ -394,15 +399,15 @@ async function buildReply(incoming, products) {
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${config.groqApiKey}`,
+      Authorization: `Bearer ${runtime.groqApiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: config.groqModel,
+      model: runtime.groqModel,
       temperature: 0.2,
       max_tokens: 350,
       messages: [
-        { role: 'system', content: buildSystemPrompt(products, paymentContext) },
+        { role: 'system', content: buildSystemPrompt(products, paymentContext, runtime) },
         ...history,
         { role: 'user', content: incoming.text.slice(0, 1200) },
       ],
@@ -417,7 +422,7 @@ async function buildReply(incoming, products) {
   const data = await response.json()
   return (
     data?.choices?.[0]?.message?.content?.trim() ||
-    config.humanHandoffMessage
+    runtime.handoffMessage
   )
 }
 
@@ -437,7 +442,7 @@ async function buildPaymentContext(chatId) {
     .join('\n')
 }
 
-function buildSystemPrompt(products, paymentContext) {
+function buildSystemPrompt(products, paymentContext, runtime) {
   const knowledge = approvedKnowledge
     .map((entry, index) => `${index + 1}. ${entry.topic}: ${entry.content}`)
     .join('\n')
@@ -449,7 +454,7 @@ function buildSystemPrompt(products, paymentContext) {
     })
     .join('\n')
 
-  return `You are ${config.botName}, a WhatsApp FAQ assistant for ${config.businessName}.
+  return `You are ${runtime.botName}, a WhatsApp FAQ assistant for ${runtime.businessName}.
 
 Business profile:
 ${businessProfile.description}
@@ -471,7 +476,7 @@ Rules:
 - For product questions, answer only from the approved product catalog above.
 - Keep replies short enough for WhatsApp.
 - If the user asks for private payment data, OTPs, PINs, passwords, or sensitive information, refuse and give a safe next step.
-- If the approved information does not answer the question, say: "${config.humanHandoffMessage}"
+- If the approved information does not answer the question, say: "${runtime.handoffMessage}"
 - Do not invent prices, availability, policies, addresses, links, or phone numbers.
 - If booking details are needed, ask for the minimum next detail.`
 }
@@ -504,28 +509,7 @@ async function sendWhatsAppText(chatId, text, session) {
 }
 
 async function sendWhatsAppImage(chatId, product, session) {
-  const response = await fetch(`${config.wahaBaseUrl}/api/sendImage`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Api-Key': config.wahaApiKey,
-    },
-    body: JSON.stringify({
-      chatId,
-      session: session || config.wahaSession,
-      file: {
-        mimetype: product.image.mimetype,
-        data: product.image.data,
-        filename: product.image.filename || `${product.id}.jpg`,
-      },
-      caption: `${product.name}\nKES ${product.price}\n${product.available ? `${product.stock} in stock` : 'Sold out'}`,
-    }),
-  })
-
-  if (!response.ok) {
-    const body = await response.text()
-    throw new Error(`WAHA sendImage failed: ${response.status} ${body}`)
-  }
+  await sendWahaImage(chatId, product, session)
 }
 
 function rememberConversation(chatId, userText, assistantText) {

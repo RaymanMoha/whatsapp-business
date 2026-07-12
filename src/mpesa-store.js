@@ -1,7 +1,9 @@
 import { getMongoDb, isMongoConfigured } from './mongodb.js'
+import { getRuntimeSettings } from './settings-store.js'
 
-export function getMpesaConfig() {
-  const environment = process.env.MPESA_ENV || 'sandbox'
+export async function getMpesaConfig() {
+  const runtime = await getRuntimeSettings()
+  const environment = runtime.mpesaEnvironment || 'sandbox'
   const baseUrl =
     process.env.MPESA_BASE_URL ||
     (environment === 'production' ? 'https://api.safaricom.co.ke' : 'https://sandbox.safaricom.co.ke')
@@ -9,18 +11,18 @@ export function getMpesaConfig() {
   return {
     environment,
     baseUrl,
-    consumerKey: process.env.MPESA_CONSUMER_KEY || '',
-    consumerSecret: process.env.MPESA_CONSUMER_SECRET || '',
-    businessShortCode: process.env.MPESA_BUSINESS_SHORT_CODE || '',
-    partyA: process.env.MPESA_PARTY_A || '',
-    passKey: process.env.MPESA_PASSKEY || '',
-    transactionType: process.env.MPESA_TRANSACTION_TYPE || 'CustomerPayBillOnline',
-    callbackUrl: process.env.MPESA_CALLBACK_URL || '',
+    consumerKey: runtime.mpesaConsumerKey || '',
+    consumerSecret: runtime.mpesaConsumerSecret || '',
+    businessShortCode: runtime.mpesaBusinessShortCode || '',
+    partyA: runtime.mpesaPartyA || '',
+    passKey: runtime.mpesaPassKey || '',
+    transactionType: runtime.mpesaTransactionType || 'CustomerPayBillOnline',
+    callbackUrl: runtime.mpesaCallbackUrl || '',
   }
 }
 
-export function getMpesaStatus() {
-  const config = getMpesaConfig()
+export async function getMpesaStatus() {
+  const config = await getMpesaConfig()
   const missing = []
   if (!config.consumerKey) missing.push('MPESA_CONSUMER_KEY')
   if (!config.consumerSecret) missing.push('MPESA_CONSUMER_SECRET')

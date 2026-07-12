@@ -15,7 +15,7 @@ function normalizePhone(phone) {
 }
 
 export async function getMpesaAccessToken() {
-  const config = getMpesaConfig()
+  const config = await getMpesaConfig()
   const credentials = Buffer.from(`${config.consumerKey}:${config.consumerSecret}`).toString('base64')
   const response = await fetch(`${config.baseUrl}/oauth/v1/generate?grant_type=client_credentials`, {
     headers: {
@@ -34,7 +34,7 @@ export async function getMpesaAccessToken() {
 }
 
 export async function initiateStkPush(input) {
-  const config = getMpesaConfig()
+  const config = await getMpesaConfig()
   const phone = normalizePhone(input.phone)
   const amount = Math.round(Number(input.amount))
 

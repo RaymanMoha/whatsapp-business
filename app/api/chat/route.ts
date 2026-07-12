@@ -5,6 +5,7 @@ import {
   formatPrice,
 } from '@/lib/commerce-data'
 import { readProducts } from '@/src/product-store'
+import { getRuntimeSettings } from '@/src/settings-store'
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +15,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 })
     }
 
-    const groqApiKey = process.env.GROQ_API_KEY
+    const runtime = await getRuntimeSettings()
+    const groqApiKey = runtime.groqApiKey
     if (!groqApiKey) {
       return NextResponse.json({ error: 'GROQ_API_KEY not configured' }, { status: 500 })
     }
@@ -38,11 +40,11 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant', 
+        model: runtime.groqModel,
         messages: [
           {
             role: 'system',
-            content: `You are a helpful WhatsApp commerce dashboard assistant for ${commerceBusinessProfile.name}.
+            content: `You are a helpful WhatsApp commerce dashboard assistant for ${runtime.businessName || commerceBusinessProfile.name}.
 
 Business profile:
 ${commerceBusinessProfile.description}
@@ -89,7 +91,7 @@ Rules:
 
     return NextResponse.json({ 
       message: assistantMessage,
-      model: 'llama-3.1-8b-instant',
+      model: runtime.groqModel,
       timestamp: new Date().toISOString()
     })
 
