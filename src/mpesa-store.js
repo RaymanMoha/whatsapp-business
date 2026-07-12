@@ -47,6 +47,17 @@ export async function listPayments() {
     .toArray()
 }
 
+export async function listRecentPaymentsForChat(chatId) {
+  if (!isMongoConfigured() || !chatId) return []
+  const db = await getMongoDb()
+  return db
+    .collection('payments')
+    .find({ chatId }, { projection: { _id: 0 } })
+    .sort({ createdAt: -1 })
+    .limit(10)
+    .toArray()
+}
+
 export async function savePayment(payment) {
   if (!isMongoConfigured()) throw new Error('MongoDB is required for payments')
   const db = await getMongoDb()

@@ -12,10 +12,17 @@ type Payment = {
    accountReference: string;
    description: string;
    status: string;
+   chatId?: string | null;
+   customerName?: string | null;
+   productId?: string | null;
+   productName?: string | null;
+   source?: string | null;
    customerMessage?: string;
    responseDescription?: string;
    mpesaReceiptNumber?: string;
    checkoutRequestId?: string;
+   confirmationSentAt?: string | null;
+   paidAt?: string | null;
    createdAt: string;
 };
 
@@ -163,7 +170,12 @@ export function MpesaPayments({
                {payments.map((payment) => (
                   <div key={payment.id} className="rounded-xl border p-4">
                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <strong>{payment.phone}</strong>
+                        <div>
+                           <strong>{payment.productName || payment.accountReference || payment.phone}</strong>
+                           <p className="text-xs text-zinc-500">
+                              {payment.customerName || payment.chatId || payment.phone}
+                           </p>
+                        </div>
                         <span
                            className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
                               payment.status === "Paid"
@@ -176,14 +188,35 @@ export function MpesaPayments({
                         </span>
                      </div>
                      <p className="mt-2 text-sm text-zinc-700">
-                        KES {payment.amount} · {payment.accountReference}
+                        KES {payment.amount} · {payment.phone}
                      </p>
+                     <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                        <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-zinc-700">
+                           {payment.source === "whatsapp" ? "WhatsApp order" : "Dashboard request"}
+                        </span>
+                        {payment.confirmationSentAt ? (
+                           <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700">
+                              Customer confirmed
+                           </span>
+                        ) : payment.status === "Paid" && payment.chatId ? (
+                           <span className="rounded-full bg-amber-50 px-2.5 py-1 text-amber-700">
+                              Confirmation pending
+                           </span>
+                        ) : null}
+                     </div>
                      <p className="mt-1 text-xs text-zinc-500">{payment.responseDescription || payment.customerMessage}</p>
                      {payment.mpesaReceiptNumber ? (
                         <p className="mt-1 text-xs text-emerald-700">Receipt: {payment.mpesaReceiptNumber}</p>
                      ) : null}
+                     {payment.checkoutRequestId ? (
+                        <p className="mt-1 text-[11px] text-zinc-400">Checkout: {payment.checkoutRequestId}</p>
+                     ) : null}
                      <p className="mt-2 text-xs text-zinc-500">
-                        {payment.createdAt ? new Date(payment.createdAt).toLocaleString() : ""}
+                        {payment.paidAt
+                           ? `Paid at ${payment.paidAt}`
+                           : payment.createdAt
+                             ? new Date(payment.createdAt).toLocaleString()
+                             : ""}
                      </p>
                   </div>
                ))}

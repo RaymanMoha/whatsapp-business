@@ -4,8 +4,9 @@ import express from 'express'
 import { approvedKnowledge, businessProfile } from './knowledge.js'
 import { appendConversationEvent } from './message-store.js'
 import { initiateStkPush } from './mpesa.js'
-import { getMpesaStatus } from './mpesa-store.js'
+import { getMpesaStatus, listRecentPaymentsForChat } from './mpesa-store.js'
 import { findProductsForMessage, readProducts } from './product-store.js'
+import { sendWahaText } from './waha.js'
 
 const app = express()
 
@@ -200,6 +201,11 @@ async function buildPaymentReply(incoming, products) {
       amount: product.price,
       accountReference: product.id,
       description: `${product.name} WhatsApp order`,
+      chatId: incoming.chatId,
+      customerName: incoming.customerName,
+      productId: product.id,
+      productName: product.name,
+      source: 'whatsapp',
     })
     pendingProducts.delete(incoming.chatId)
     pendingPayments.delete(incoming.chatId)
@@ -286,6 +292,7 @@ async function buildReply(incoming, products) {
   }
 
   const history = conversations.get(incoming.chatId) || []
+  const paymentContext = await buildPaymentContext(incoming.chatId)
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -297,7 +304,7 @@ async function buildReply(incoming, products) {
       temperature: 0.2,
       max_tokens: 350,
       messages: [
-        { role: 'system', content: buildSystemPrompt(products) },
+        { role: 'system', content: buildSystemPrompt(products, paymentContext) },
         ...history,
         { role: 'user', content: incoming.text.slice(0, 1200) },
       ],
@@ -316,7 +323,21 @@ async function buildReply(incoming, products) {
   )
 }
 
-function buildSystemPrompt(products) {
+async function buildPaymentContext(chatId) {
+  const payments = await listRecentPaymentsForChat(chatId).catch(() => [])
+  if (payments.length === 0) return 'No recent payment records for this chat.'
+
+  return payments
+    .slice(0, 5)
+    .map((payment, index) => {
+      const product = payment.productName || payment.accountReference || 'order'
+      const receipt = payment.mpesaReceiptNumber ? ` Receipt: ${payment.mpesaReceiptNumber}.` : ''
+      return `${index + 1}. ${product}: KES ${payment.amount}, status ${payment.status}.${receipt}`
+    })
+    .join('\n')
+}
+
+function buildSystemPrompt(products, paymentContext) {
   const knowledge = approvedKnowledge
     .map((entry, index) => `${index + 1}. ${entry.topic}: ${entry.content}`)
     .join('\n')
@@ -341,6 +362,9 @@ ${knowledge}
 
 Approved product catalog:
 ${catalog}
+
+Recent payment records for this WhatsApp chat:
+${paymentContext}
 
 Rules:
 - Answer only from the approved information above.
@@ -376,23 +400,7 @@ async function sendRelevantProductImages(incoming, products) {
 }
 
 async function sendWhatsAppText(chatId, text, session) {
-  const response = await fetch(`${config.wahaBaseUrl}/api/sendText`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Api-Key': config.wahaApiKey,
-    },
-    body: JSON.stringify({
-      chatId,
-      text,
-      session: session || config.wahaSession,
-    }),
-  })
-
-  if (!response.ok) {
-    const body = await response.text()
-    throw new Error(`WAHA sendText failed: ${response.status} ${body}`)
-  }
+  await sendWahaText(chatId, text, session || config.wahaSession)
 }
 
 async function sendWhatsAppImage(chatId, product, session) {
