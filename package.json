@@ -10,7 +10,7 @@
     "lint": "eslint",
     "bot:dev": "node --watch src/server.js",
     "bot:start": "node src/server.js",
-    "check": "node --check src/server.js && node --check src/knowledge.js && node --check src/catalog.js && npx tsc --noEmit"
+    "check": "node --check src/server.js && node --check src/knowledge.js && node --check src/catalog.js && node --check src/receipt.js && node --check src/receipt-store.js && npx tsc --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
@@ -35,6 +35,7 @@
     "lucide-react": "^0.542.0",
     "mongodb": "^6.21.0",
     "next": "^15.5.20",
+    "pdf-lib": "^1.17.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.62.0",

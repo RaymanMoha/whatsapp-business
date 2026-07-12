@@ -22,6 +22,9 @@ type Payment = {
    mpesaReceiptNumber?: string;
    checkoutRequestId?: string;
    confirmationSentAt?: string | null;
+   receiptId?: string | null;
+   receiptCreatedAt?: string | null;
+   receiptSharedAt?: string | null;
    paidAt?: string | null;
    createdAt: string;
 };
@@ -45,6 +48,7 @@ export function MpesaPayments({
    const [mpesa, setMpesa] = React.useState<MpesaStatus | null>(initialMpesa);
    const [loading, setLoading] = React.useState(!initialMpesa);
    const [submitting, setSubmitting] = React.useState(false);
+   const [sharingId, setSharingId] = React.useState<string | null>(null);
    const [notice, setNotice] = React.useState("");
    const [form, setForm] = React.useState({
       phone: "",
@@ -86,6 +90,28 @@ export function MpesaPayments({
       }
    }
 
+   async function shareReceipt(payment: Payment) {
+      setSharingId(payment.id);
+      setNotice("");
+      try {
+         const response = await fetch(`/api/commerce/payments/${encodeURIComponent(payment.id)}/receipt`, {
+            method: "POST",
+         });
+         const data = await response.json();
+         if (!response.ok) throw new Error(data.error || "Receipt could not be shared");
+         setPayments((current) =>
+            current.map((item) =>
+               item.id === payment.id ? { ...item, receiptSharedAt: data.receipt.sharedAt } : item,
+            ),
+         );
+         setNotice(`Receipt shared with ${payment.customerName || payment.phone} on WhatsApp.`);
+      } catch (error) {
+         setNotice(error instanceof Error ? error.message : "Receipt could not be shared");
+      } finally {
+         setSharingId(null);
+      }
+   }
+
    React.useEffect(() => {
       if (initialMpesa) return;
       loadPayments().catch(() => {
@@ -95,8 +121,8 @@ export function MpesaPayments({
    }, [initialMpesa]);
 
    return (
-      <div className="grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
-         <Card className="text-black dark:text-black">
+      <div className="grid min-w-0 gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
+         <Card className="min-w-0 text-black dark:text-black">
             <CardHeader>
                <CardTitle>Request M-Pesa payment</CardTitle>
                <CardDescription>
@@ -153,7 +179,7 @@ export function MpesaPayments({
             </CardContent>
          </Card>
 
-         <Card className="text-black dark:text-black">
+         <Card className="min-w-0 text-black dark:text-black">
             <CardHeader>
                <CardTitle>Payment history</CardTitle>
                <CardDescription>
@@ -168,7 +194,7 @@ export function MpesaPayments({
                   </div>
                ) : null}
                {payments.map((payment) => (
-                  <div key={payment.id} className="rounded-xl border p-4">
+                  <div key={payment.id} className="min-w-0 rounded-xl border p-4">
                      <div className="flex flex-wrap items-center justify-between gap-2">
                         <div>
                            <strong>{payment.productName || payment.accountReference || payment.phone}</strong>
@@ -187,7 +213,7 @@ export function MpesaPayments({
                            {payment.status}
                         </span>
                      </div>
-                     <p className="mt-2 text-sm text-zinc-700">
+                     <p className="mt-2 break-all text-sm text-zinc-700">
                         KES {payment.amount} · {payment.phone}
                      </p>
                      <div className="mt-2 flex flex-wrap gap-2 text-xs">
@@ -207,6 +233,38 @@ export function MpesaPayments({
                      <p className="mt-1 text-xs text-zinc-500">{payment.responseDescription || payment.customerMessage}</p>
                      {payment.mpesaReceiptNumber ? (
                         <p className="mt-1 text-xs text-emerald-700">Receipt: {payment.mpesaReceiptNumber}</p>
+                     ) : null}
+                     {payment.status === "Paid" ? (
+                        <div className="mt-4 flex min-w-0 flex-col items-stretch justify-between gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-3 sm:flex-row sm:items-center">
+                           <div>
+                              <p className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-800">
+                                 Customer receipt
+                              </p>
+                              <p className="mt-1 text-xs text-emerald-950/60">
+                                 {payment.receiptSharedAt
+                                    ? `Shared ${new Date(payment.receiptSharedAt).toLocaleString()}`
+                                    : "Ready to view, download, or send on WhatsApp"}
+                              </p>
+                           </div>
+                           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                              <Button asChild variant="outline" size="sm" className="w-full bg-white sm:w-auto">
+                                 <a
+                                    href={`/api/commerce/payments/${encodeURIComponent(payment.id)}/receipt`}
+                                    target="_blank"
+                                    rel="noreferrer">
+                                    View receipt
+                                 </a>
+                              </Button>
+                              <Button
+                                 type="button"
+                                 size="sm"
+                                 className="w-full sm:w-auto"
+                                 onClick={() => shareReceipt(payment)}
+                                 disabled={sharingId === payment.id}>
+                                 {sharingId === payment.id ? "Sharing…" : payment.receiptSharedAt ? "Share again" : "Share on WhatsApp"}
+                              </Button>
+                           </div>
+                        </div>
                      ) : null}
                      {payment.checkoutRequestId ? (
                         <p className="mt-1 text-[11px] text-zinc-400">Checkout: {payment.checkoutRequestId}</p>

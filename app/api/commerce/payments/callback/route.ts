@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { updatePaymentByCheckoutRequestId } from "@/src/mpesa-store";
 import { appendConversationEvent } from "@/src/message-store";
-import { sendWahaText } from "@/src/waha";
+import { ensurePaymentReceipt, markReceiptShared } from "@/src/receipt-store";
+import { sendWahaFile, sendWahaText } from "@/src/waha";
 
 export async function POST(request: NextRequest) {
    const body = await request.json();
@@ -44,6 +45,33 @@ export async function POST(request: NextRequest) {
                customerName: payment.customerName || payment.chatId,
                direction: "assistant",
                text: message,
+               status: "sent",
+            });
+         }).catch(() => null);
+      }
+
+      if (callback.ResultCode === 0 && payment && !payment.receiptSharedAt) {
+         await ensurePaymentReceipt(payment).then(async (receipt) => {
+            const targetChatId = payment.chatId || (payment.phone ? `${String(payment.phone).replace(/\D/g, "")}@c.us` : null);
+            if (!targetChatId) return;
+
+            await sendWahaFile(
+               targetChatId,
+               receipt,
+               `Your receipt for ${payment.productName || payment.accountReference || "your order"}. Thank you for your payment.`,
+            );
+            const receiptSharedAt = await markReceiptShared(payment.id);
+            await updatePaymentByCheckoutRequestId(checkoutRequestId, {
+               receiptId: receipt.id,
+               receiptCreatedAt: receipt.createdAt,
+               receiptSharedAt,
+            });
+            await appendConversationEvent({
+               id: `${checkoutRequestId}-receipt-shared`,
+               chatId: targetChatId,
+               customerName: payment.customerName || targetChatId,
+               direction: "assistant",
+               text: `Shared payment receipt: ${receipt.receiptNumber}`,
                status: "sent",
             });
          }).catch(() => null);

@@ -58,6 +58,23 @@ export async function listRecentPaymentsForChat(chatId) {
     .toArray()
 }
 
+export async function getPaymentById(id) {
+  if (!isMongoConfigured() || !id) return null
+  const db = await getMongoDb()
+  return db.collection('payments').findOne({ id }, { projection: { _id: 0 } })
+}
+
+export async function updatePaymentById(id, updates) {
+  if (!isMongoConfigured()) throw new Error('MongoDB is required for payments')
+  const db = await getMongoDb()
+  const now = new Date().toISOString()
+  await db.collection('payments').updateOne(
+    { id },
+    { $set: { ...updates, updatedAt: now } },
+  )
+  return db.collection('payments').findOne({ id }, { projection: { _id: 0 } })
+}
+
 export async function savePayment(payment) {
   if (!isMongoConfigured()) throw new Error('MongoDB is required for payments')
   const db = await getMongoDb()
