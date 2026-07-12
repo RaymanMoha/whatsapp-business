@@ -27,7 +27,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
                   src={Bg.src}
                   alt="AI WhatsApp commerce conversation helping a customer choose a product"
                   fill
-                  className="object-cover rounded-r-3xl"
+                  className="object-cover object-top rounded-r-3xl"
                   priority
                   sizes="50vw"
                />
