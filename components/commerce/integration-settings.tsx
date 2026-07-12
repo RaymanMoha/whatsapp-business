@@ -25,7 +25,7 @@ type PublicValues = {
    businessName: string;
    botName: string;
    handoffMessage: string;
-   groqModel: string;
+   aiModel: string;
    mpesaEnvironment: string;
    mpesaBusinessShortCode: string;
    mpesaPartyA: string;
@@ -33,7 +33,7 @@ type PublicValues = {
    mpesaCallbackUrl: string;
 };
 
-type SecretName = "groqApiKey" | "mpesaConsumerKey" | "mpesaConsumerSecret" | "mpesaPassKey";
+type SecretName = "aiApiKey" | "mpesaConsumerKey" | "mpesaConsumerSecret" | "mpesaPassKey";
 
 type SecretStatus = {
    configured: boolean;
@@ -47,7 +47,7 @@ export type SettingsPayload = {
    locked: {
       mongo: boolean;
       dashboardAuth: boolean;
-      waha: { configured: boolean; baseUrl: string; session: string };
+      messaging: { configured: boolean; baseUrl: string; session: string };
    };
    updatedAt: string | null;
    updatedBy: string | null;
@@ -56,7 +56,7 @@ export type SettingsPayload = {
 type TestState = { state: "idle" | "testing" | "success" | "error"; message?: string };
 
 const emptySecrets: Record<SecretName, string> = {
-   groqApiKey: "",
+   aiApiKey: "",
    mpesaConsumerKey: "",
    mpesaConsumerSecret: "",
    mpesaPassKey: "",
@@ -139,8 +139,8 @@ export function IntegrationSettings({ initialSettings }: { initialSettings: Sett
    const [secrets, setSecrets] = React.useState(emptySecrets);
    const [saving, setSaving] = React.useState(false);
    const [tests, setTests] = React.useState<Record<string, TestState>>({
-      groq: { state: "idle" },
-      waha: { state: "idle" },
+      ai: { state: "idle" },
+      messaging: { state: "idle" },
       mpesa: { state: "idle" },
    });
 
@@ -173,10 +173,10 @@ export function IntegrationSettings({ initialSettings }: { initialSettings: Sett
       }
    }
 
-   async function testConnection(provider: "groq" | "waha" | "mpesa") {
+   async function testConnection(provider: "ai" | "messaging" | "mpesa") {
       setTests((current) => ({ ...current, [provider]: { state: "testing" } }));
-      const credentials = provider === "groq"
-         ? { apiKey: secrets.groqApiKey }
+      const credentials = provider === "ai"
+         ? { apiKey: secrets.aiApiKey }
          : provider === "mpesa"
            ? {
                 consumerKey: secrets.mpesaConsumerKey,
@@ -241,19 +241,19 @@ export function IntegrationSettings({ initialSettings }: { initialSettings: Sett
                      <BrainCircuit className="size-5 text-violet-600" />
                      <h3 className="font-semibold">AI replies</h3>
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-zinc-500">Groq generates product-aware answers using your approved store information.</p>
+                  <p className="mt-3 text-sm leading-6 text-zinc-500">Your private AI engine generates product-aware answers using approved store information.</p>
                   <div className="mt-4 space-y-2">
-                     <Button type="button" variant="outline" size="sm" className="rounded-lg border-[#0b5b50] bg-[#0b5b50] text-white hover:bg-[#08483f] hover:text-white" onClick={() => testConnection("groq")} disabled={tests.groq.state === "testing"}>
-                        Test Groq
+                     <Button type="button" variant="outline" size="sm" className="rounded-lg border-[#0b5b50] bg-[#0b5b50] text-white hover:bg-[#08483f] hover:text-white" onClick={() => testConnection("ai")} disabled={tests.ai.state === "testing"}>
+                        Test AI service
                      </Button>
-                     <ProviderStatus test={tests.groq} />
+                     <ProviderStatus test={tests.ai} />
                   </div>
                </div>
                <div className="grid gap-5 md:grid-cols-2">
-                  <SecretField id="groqApiKey" label="Groq API key" value={secrets.groqApiKey} status={settings.secrets.groqApiKey} onChange={(value) => updateSecret("groqApiKey", value)} />
+                  <SecretField id="aiApiKey" label="AI service key" value={secrets.aiApiKey} status={settings.secrets.aiApiKey} onChange={(value) => updateSecret("aiApiKey", value)} />
                   <div className="space-y-2">
-                     <FieldLabel htmlFor="groqModel">Model</FieldLabel>
-                     <Input id="groqModel" value={values.groqModel} onChange={(event) => updateValue("groqModel", event.target.value)} className="h-11 rounded-xl border-zinc-200" />
+                     <FieldLabel htmlFor="aiModel">Model</FieldLabel>
+                     <Input id="aiModel" value={values.aiModel} onChange={(event) => updateValue("aiModel", event.target.value)} className="h-11 rounded-xl border-zinc-200" />
                      <p className="text-xs leading-5 text-zinc-500">Used by WhatsApp replies and the dashboard assistant.</p>
                   </div>
                </div>
@@ -338,12 +338,12 @@ export function IntegrationSettings({ initialSettings }: { initialSettings: Sett
                      <div className="mt-4 grid gap-3 md:grid-cols-3">
                         <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-3 text-sm"><Database className="size-4 text-zinc-500" /><span>MongoDB {settings.locked.mongo ? "configured" : "missing"}</span></div>
                         <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-3 text-sm"><KeyRound className="size-4 text-zinc-500" /><span>Dashboard auth {settings.locked.dashboardAuth ? "secured" : "missing"}</span></div>
-                        <button type="button" onClick={() => testConnection("waha")} className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white p-3 text-left text-sm transition hover:border-zinc-400">
-                           <span className="flex items-center gap-3"><MessageCircleMore className="size-4 text-zinc-500" />WAHA {settings.locked.waha.session}</span>
-                           {tests.waha.state === "testing" ? <Loader2 className="size-4 animate-spin" /> : <span className="text-xs text-zinc-400">Test</span>}
+                        <button type="button" onClick={() => testConnection("messaging")} className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white p-3 text-left text-sm transition hover:border-zinc-400">
+                           <span className="flex items-center gap-3"><MessageCircleMore className="size-4 text-zinc-500" />WhatsApp {settings.locked.messaging.session}</span>
+                           {tests.messaging.state === "testing" ? <Loader2 className="size-4 animate-spin" /> : <span className="text-xs text-zinc-400">Test</span>}
                         </button>
                      </div>
-                     {tests.waha.state !== "idle" ? <div className="mt-3"><ProviderStatus test={tests.waha} /></div> : null}
+                     {tests.messaging.state !== "idle" ? <div className="mt-3"><ProviderStatus test={tests.messaging} /></div> : null}
                   </div>
                </div>
             </section>

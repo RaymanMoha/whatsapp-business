@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     const runtime = await getRuntimeSettings()
     const groqApiKey = runtime.groqApiKey
     if (!groqApiKey) {
-      return NextResponse.json({ error: 'GROQ_API_KEY not configured' }, { status: 500 })
+      return NextResponse.json({ error: 'AI service is not configured' }, { status: 500 })
     }
 
     const approvedKnowledge = commerceApprovedKnowledge
@@ -61,7 +61,7 @@ Dashboard sections:
 - Orders: /dashboard/orders
 - Customer Questions: /dashboard/questions
 - Bot Settings: /dashboard/bot-settings
-- WAHA Session: /dashboard/session
+- WhatsApp Connection: /dashboard/session
 - Approved Knowledge: /dashboard/knowledge
 
 Rules:
@@ -82,7 +82,7 @@ Rules:
 
     if (!response.ok) {
       const errorData = await response.text()
-      console.error('Groq API error:', errorData)
+      console.error('AI provider API error:', errorData)
       return NextResponse.json({ error: 'AI service temporarily unavailable' }, { status: 500 })
     }
 

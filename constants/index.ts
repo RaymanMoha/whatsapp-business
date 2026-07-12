@@ -46,7 +46,7 @@ export const navGroups: NavGroup[] = [
       items: [
          { label: "Bot Settings", href: "/dashboard/bot-settings" },
          { label: "Approved Knowledge", href: "/dashboard/knowledge" },
-         { label: "WAHA Session", href: "/dashboard/session" },
+         { label: "WhatsApp Connection", href: "/dashboard/session" },
          { label: "Message Templates", href: "/dashboard/templates" },
       ],
    },
@@ -75,7 +75,7 @@ export { sampleThreads } from "@/lib/chat-samples";
 
 export const HERO_TITLE = "WhatsApp Commerce Hub";
 export const HERO_SUBTITLE =
-   "Manage product pictures, availability, customer questions, and AI replies for a WhatsApp storefront powered by WAHA and Groq.";
+   "Manage product pictures, availability, customer questions, and AI replies from one private WhatsApp commerce system.";
 
 export const CTA_GET_INSIGHTS = "Open section";
 

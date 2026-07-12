@@ -10,8 +10,8 @@ export default async function SessionPage() {
       <DashboardLayout>
          <div className="space-y-6">
             <Heading
-               title="WAHA Session"
-               description="WhatsApp connection status, QR pairing, webhook delivery, and session health."
+               title="WhatsApp Connection"
+               description="WhatsApp pairing, message delivery, automation readiness, and connection health."
             />
             <Card className="text-black dark:text-black">
                <CardHeader>
@@ -19,12 +19,12 @@ export default async function SessionPage() {
                </CardHeader>
                <CardContent className="grid gap-3 md:grid-cols-2">
                   {[
-                     ["WAHA status", status.waha.status],
-                     ["WAHA session", status.waha.session],
-                     ["Connected phone", status.waha.phone || "Not connected"],
-                     ["WhatsApp name", status.waha.pushName || "Not available"],
+                     ["Connection status", status.messaging.status],
+                     ["Connection session", status.messaging.session],
+                     ["Connected phone", status.messaging.phone || "Not connected"],
+                     ["WhatsApp name", status.messaging.pushName || "Not available"],
                      ["Bot service", status.bot.online ? "Online" : "Offline"],
-                     ["Groq", status.groq.configured ? "Configured" : "Missing key"],
+                     ["AI service", status.ai.configured ? "Configured" : "Missing key"],
                      [
                         "MongoDB",
                         status.mongo.configured

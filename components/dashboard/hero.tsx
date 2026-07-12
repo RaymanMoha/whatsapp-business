@@ -59,7 +59,7 @@ export function Hero() {
                   <div className="flex items-center justify-between rounded-3xl bg-white/[0.06] p-4">
                      <div>
                         <p className="text-sm font-bold">Today&apos;s sales assistant</p>
-                        <p className="text-xs font-semibold text-emerald-300">WAHA + Groq + M-Pesa</p>
+                        <p className="text-xs font-semibold text-emerald-300">WhatsApp + Private AI + M-Pesa</p>
                      </div>
                      <span className="grid size-10 place-items-center rounded-2xl bg-emerald-400/10">
                         <Bot className="size-5 text-emerald-300" />
@@ -105,8 +105,8 @@ export function Hero() {
                   </div>
                   <div className="mt-8 grid gap-4 md:grid-cols-3">
                      {[
-                        ["WAHA", "Connected"],
-                        ["Groq", "AI replies ready"],
+                        ["WhatsApp", "Connected"],
+                        ["AI engine", "Replies ready"],
                         ["Catalog", "128 products"],
                      ].map(([label, value]) => (
                         <div key={label} className="rounded-xl border border-white/15 bg-white/10 p-4">

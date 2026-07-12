@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       const credentials = body.credentials || {};
       const overrides: Record<string, string> = {};
 
-      if (provider === "groq" && credentials.apiKey) {
+      if (provider === "ai" && credentials.apiKey) {
          overrides.groqApiKey = String(credentials.apiKey).trim();
       }
       if (provider === "mpesa") {

@@ -30,7 +30,7 @@ export async function sendWahaText(chatId, text, session) {
 
   if (!response.ok) {
     const body = await response.text()
-    throw new Error(`WAHA sendText failed: ${response.status} ${body}`)
+    throw new Error(`WhatsApp message delivery failed: ${response.status} ${body}`)
   }
 }
 
@@ -60,7 +60,7 @@ export async function sendWahaFile(chatId, file, caption, session) {
 
   if (!response.ok) {
     const body = await response.text()
-    throw new Error(`WAHA sendFile failed: ${response.status} ${body}`)
+    throw new Error(`WhatsApp file delivery failed: ${response.status} ${body}`)
   }
 }
 
@@ -89,6 +89,6 @@ export async function sendWahaImage(chatId, product, session) {
 
   if (!response.ok) {
     const body = await response.text()
-    throw new Error(`WAHA sendImage failed: ${response.status} ${body}`)
+    throw new Error(`WhatsApp image delivery failed: ${response.status} ${body}`)
   }
 }

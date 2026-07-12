@@ -6,24 +6,31 @@ const SETTINGS_COLLECTION = 'system_settings'
 const AUDIT_COLLECTION = 'settings_audit'
 const CACHE_TTL_MS = 5000
 
-const PUBLIC_KEYS = [
-  'businessName',
-  'botName',
-  'handoffMessage',
-  'groqModel',
-  'mpesaEnvironment',
-  'mpesaBusinessShortCode',
-  'mpesaPartyA',
-  'mpesaTransactionType',
-  'mpesaCallbackUrl',
-]
-
 const SECRET_KEYS = [
   'groqApiKey',
   'mpesaConsumerKey',
   'mpesaConsumerSecret',
   'mpesaPassKey',
 ]
+
+const DASHBOARD_PUBLIC_KEYS = {
+  businessName: 'businessName',
+  botName: 'botName',
+  handoffMessage: 'handoffMessage',
+  aiModel: 'groqModel',
+  mpesaEnvironment: 'mpesaEnvironment',
+  mpesaBusinessShortCode: 'mpesaBusinessShortCode',
+  mpesaPartyA: 'mpesaPartyA',
+  mpesaTransactionType: 'mpesaTransactionType',
+  mpesaCallbackUrl: 'mpesaCallbackUrl',
+}
+
+const DASHBOARD_SECRET_KEYS = {
+  aiApiKey: 'groqApiKey',
+  mpesaConsumerKey: 'mpesaConsumerKey',
+  mpesaConsumerSecret: 'mpesaConsumerSecret',
+  mpesaPassKey: 'mpesaPassKey',
+}
 
 let runtimeCache = null
 let runtimeCacheExpiresAt = 0
@@ -132,15 +139,17 @@ export async function getSettingsForDashboard() {
   const runtime = runtimeFromDocument(defaults, document)
 
   const secrets = {}
-  for (const key of SECRET_KEYS) {
-    secrets[key] = secretSummary(
-      runtime[key],
-      document?.secrets?.[key] ? 'encrypted database' : defaults[key] ? 'environment' : 'missing',
+  for (const [dashboardKey, runtimeKey] of Object.entries(DASHBOARD_SECRET_KEYS)) {
+    secrets[dashboardKey] = secretSummary(
+      runtime[runtimeKey],
+      document?.secrets?.[runtimeKey] ? 'encrypted database' : defaults[runtimeKey] ? 'environment' : 'missing',
     )
   }
 
   const values = {}
-  for (const key of PUBLIC_KEYS) values[key] = runtime[key] || ''
+  for (const [dashboardKey, runtimeKey] of Object.entries(DASHBOARD_PUBLIC_KEYS)) {
+    values[dashboardKey] = runtime[runtimeKey] || ''
+  }
 
   return {
     values,
@@ -148,7 +157,7 @@ export async function getSettingsForDashboard() {
     locked: {
       mongo: Boolean(process.env.MONGODB_URI),
       dashboardAuth: Boolean(process.env.AUTH_SECRET && process.env.DASHBOARD_ADMIN_EMAIL),
-      waha: {
+      messaging: {
         configured: Boolean(runtime.wahaApiKey),
         baseUrl: runtime.wahaBaseUrl,
         session: runtime.wahaSession,
@@ -169,21 +178,21 @@ export async function saveRuntimeSettings(input, updatedBy = 'dashboard admin') 
   const publicInput = input?.values || {}
   const secretInput = input?.secrets || {}
 
-  for (const key of PUBLIC_KEYS) {
-    if (!(key in publicInput)) continue
-    publicUpdates[key] = String(publicInput[key] ?? '').trim()
-    changedFields.push(key)
+  for (const [dashboardKey, runtimeKey] of Object.entries(DASHBOARD_PUBLIC_KEYS)) {
+    if (!(dashboardKey in publicInput)) continue
+    publicUpdates[runtimeKey] = String(publicInput[dashboardKey] ?? '').trim()
+    changedFields.push(dashboardKey)
   }
 
   if ('mpesaEnvironment' in publicUpdates && !['sandbox', 'production'].includes(publicUpdates.mpesaEnvironment)) {
     throw new Error('M-Pesa environment must be sandbox or production')
   }
 
-  for (const key of SECRET_KEYS) {
-    const value = String(secretInput[key] || '').trim()
+  for (const [dashboardKey, runtimeKey] of Object.entries(DASHBOARD_SECRET_KEYS)) {
+    const value = String(secretInput[dashboardKey] || '').trim()
     if (!value) continue
-    secretUpdates[key] = encryptSecret(value)
-    changedFields.push(key)
+    secretUpdates[runtimeKey] = encryptSecret(value)
+    changedFields.push(dashboardKey)
   }
 
   if (!changedFields.length) throw new Error('No setting changes were provided')
@@ -215,28 +224,28 @@ export async function saveRuntimeSettings(input, updatedBy = 'dashboard admin') 
 export async function testRuntimeProvider(provider, overrides = {}) {
   const runtime = { ...(await getRuntimeSettings({ fresh: true })), ...overrides }
 
-  if (provider === 'groq') {
-    if (!runtime.groqApiKey) throw new Error('Add a Groq API key first')
+  if (provider === 'ai') {
+    if (!runtime.groqApiKey) throw new Error('Add an AI service key first')
     const response = await fetch('https://api.groq.com/openai/v1/models', {
       headers: { Authorization: `Bearer ${runtime.groqApiKey}` },
       signal: AbortSignal.timeout(8000),
     })
-    if (!response.ok) throw new Error(`Groq rejected the key (${response.status})`)
-    return { ok: true, message: 'Groq connection verified' }
+    if (!response.ok) throw new Error(`AI service rejected the key (${response.status})`)
+    return { ok: true, message: 'AI service connection verified' }
   }
 
-  if (provider === 'waha') {
-    if (!runtime.wahaApiKey) throw new Error('WAHA API key is not configured')
+  if (provider === 'messaging') {
+    if (!runtime.wahaApiKey) throw new Error('WhatsApp connection key is not configured')
     const response = await fetch(`${runtime.wahaBaseUrl}/api/sessions?all=true`, {
       headers: { 'X-Api-Key': runtime.wahaApiKey },
       signal: AbortSignal.timeout(8000),
     })
-    if (!response.ok) throw new Error(`WAHA connection failed (${response.status})`)
+    if (!response.ok) throw new Error(`WhatsApp connection failed (${response.status})`)
     const sessions = await response.json()
     const session = Array.isArray(sessions)
       ? sessions.find((item) => item.name === runtime.wahaSession) || sessions[0]
       : null
-    return { ok: true, message: `WAHA verified · ${session?.status || 'session not connected'}` }
+    return { ok: true, message: `WhatsApp connection verified · ${session?.status || 'session not connected'}` }
   }
 
   if (provider === 'mpesa') {

@@ -11,9 +11,9 @@ test('dashboard settings redact provider credentials', async () => {
   const settings = await getSettingsForDashboard()
   const serialized = JSON.stringify(settings)
 
-  assert.equal(settings.secrets.groqApiKey.configured, true)
-  assert.equal(settings.secrets.groqApiKey.ending, '1234')
-  assert.equal(settings.secrets.groqApiKey.source, 'environment')
+  assert.equal(settings.secrets.aiApiKey.configured, true)
+  assert.equal(settings.secrets.aiApiKey.ending, '1234')
+  assert.equal(settings.secrets.aiApiKey.source, 'environment')
   assert.equal(serialized.includes('gsk_test_secret_value_1234'), false)
   assert.equal(serialized.includes('mpesa-consumer-key-5678'), false)
 })

@@ -41,18 +41,18 @@ export async function getCommerceRuntimeStatus() {
 
    return {
       bot: {
-         configured: Boolean(botHealth?.groqConfigured),
+         configured: Boolean(botHealth?.aiConfigured),
          online: Boolean(botHealth?.ok),
          businessName: botHealth?.businessName || runtime.businessName,
       },
-      waha: {
+      messaging: {
          online: Boolean(session),
          session: session?.name || sessionName,
          status: session?.status || "NOT_CONNECTED",
          phone: session?.me?.id || null,
          pushName: session?.me?.pushName || null,
       },
-      groq: {
+      ai: {
          configured: Boolean(runtime.groqApiKey),
          model: runtime.groqModel,
       },

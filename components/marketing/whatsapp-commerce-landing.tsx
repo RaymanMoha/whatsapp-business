@@ -30,7 +30,7 @@ const steps = [
    {
       num: "02",
       title: "Customers chat on WhatsApp",
-      desc: "WAHA receives the message, Groq drafts the reply, and the customer sees products, availability, and next steps in chat.",
+      desc: "The commerce engine receives the message, drafts an approved reply, and shows the customer products, availability, and next steps in chat.",
       tag: "WhatsApp",
    },
    {

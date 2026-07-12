@@ -14,7 +14,7 @@ export default async function CustomersPage() {
          <div className="space-y-6">
             <Heading
                title="Customers"
-               description="Customer profiles and WhatsApp conversation history from live WAHA messages."
+               description="Customer profiles and conversation history from live WhatsApp messages."
             />
             <Card className="text-black dark:text-black">
                <CardHeader>

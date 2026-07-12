@@ -18,7 +18,7 @@ export default async function DashboardPage() {
           ["Available products", `${stats.available}/${stats.total}`, "from shared catalog"],
           ["Stock units", String(stats.stock), "current demo inventory"],
           ["AI reply rate", `${stats.replyRate}%`, `${stats.questions} reviewed questions`],
-          ["WAHA session", runtime.waha.status, runtime.waha.phone || "phone not connected"],
+          ["WhatsApp connection", runtime.messaging.status, runtime.messaging.phone || "phone not connected"],
         ].map(([label, value, note]) => (
           <div key={label} className="rounded-xl border border-zinc-300 bg-white/50 p-4 text-black">
             <p className="text-sm text-zinc-600">{label}</p>

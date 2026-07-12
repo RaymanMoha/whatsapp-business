@@ -55,10 +55,10 @@ app.get('/health', async (_request, response) => {
   const ok = Boolean(runtime.groqApiKey) && mongo.connected
   response.status(ok ? 200 : 503).json({
     ok,
-    service: 'waha-groq-bot',
+    service: 'whatsapp-commerce-bot',
     businessName: runtime.businessName,
-    groqConfigured: Boolean(runtime.groqApiKey),
-    groqModel: runtime.groqModel,
+    aiConfigured: Boolean(runtime.groqApiKey),
+    aiModel: runtime.groqModel,
     mongo,
   })
 })
@@ -391,7 +391,7 @@ function normalizePaymentPhone(phone) {
 async function buildReply(incoming, products) {
   const runtime = await getRuntimeSettings()
   if (!runtime.groqApiKey) {
-    return 'The AI assistant is not configured yet. Add GROQ_API_KEY to .env and restart the bot.'
+    return 'The AI assistant is not configured yet. Add an AI service key in Bot Settings.'
   }
 
   const history = conversations.get(incoming.chatId) || []
@@ -416,7 +416,7 @@ async function buildReply(incoming, products) {
 
   if (!response.ok) {
     const body = await response.text()
-    throw new Error(`Groq request failed: ${response.status} ${body}`)
+    throw new Error(`AI provider request failed: ${response.status} ${body}`)
   }
 
   const data = await response.json()
