@@ -29,6 +29,7 @@ const config = {
 
 const conversations = new Map()
 const pendingProducts = new Map()
+const pendingPayments = new Map()
 const seenMessageIds = new Set()
 
 app.get('/health', (_request, response) => {
@@ -157,10 +158,20 @@ function extractIncomingMessage(body) {
 }
 
 async function buildPaymentReply(incoming, products) {
-  if (!isPaymentIntent(incoming.text)) return null
+  const hasPaymentIntent = isPaymentIntent(incoming.text)
+  const pendingPayment = pendingPayments.get(incoming.chatId) || null
+  const typedPhone = extractPaymentPhone(incoming.text)
+  const shouldContinuePayment = Boolean(
+    hasPaymentIntent ||
+      pendingPayment ||
+      (pendingProducts.has(incoming.chatId) && typedPhone),
+  )
+
+  if (!shouldContinuePayment) return null
 
   const product = resolvePaymentProduct(incoming.chatId, incoming.text, products)
   if (!product) {
+    pendingPayments.set(incoming.chatId, { requestedAt: new Date().toISOString() })
     return 'Which product would you like to pay for? Reply with the product name, for example: "pay for Organic Honey".'
   }
 
@@ -168,9 +179,14 @@ async function buildPaymentReply(incoming, products) {
     return `${product.name} is currently sold out, so I cannot start payment for it.`
   }
 
-  const phone = extractPaymentPhone(incoming.text) || extractPhoneFromChatId(incoming.chatId)
+  pendingPayments.set(incoming.chatId, {
+    requestedAt: pendingPayment?.requestedAt || new Date().toISOString(),
+    productId: product.id,
+  })
+
+  const phone = typedPhone || extractPhoneFromChatId(incoming.chatId)
   if (!phone) {
-    return `Send the M-Pesa phone number for ${product.name}, for example: "pay for ${product.name} 2547XXXXXXX".`
+    return `Send the M-Pesa phone number for ${product.name}, for example: "2547XXXXXXX".`
   }
 
   const mpesa = getMpesaStatus()
@@ -186,6 +202,7 @@ async function buildPaymentReply(incoming, products) {
       description: `${product.name} WhatsApp order`,
     })
     pendingProducts.delete(incoming.chatId)
+    pendingPayments.delete(incoming.chatId)
     return [
       `Payment request sent for ${product.name}.`,
       `Amount: KES ${product.price}.`,
@@ -227,6 +244,12 @@ function resolvePaymentProduct(chatId, text, products) {
   if (matchedProduct) {
     pendingProducts.set(chatId, matchedProduct)
     return matchedProduct
+  }
+
+  const pendingPayment = pendingPayments.get(chatId)
+  if (pendingPayment?.productId) {
+    const product = products.find((item) => item.id === pendingPayment.productId)
+    if (product) return product
   }
 
   return pendingProducts.get(chatId) || null
