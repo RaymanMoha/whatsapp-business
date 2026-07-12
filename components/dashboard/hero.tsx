@@ -1,7 +1,15 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { BookOpen, PackagePlus } from "lucide-react";
+import {
+   Bot,
+   BookOpen,
+   CreditCard,
+   MessageCircle,
+   PackagePlus,
+   Sparkles,
+   Zap,
+} from "lucide-react";
 import { HERO_TITLE, HERO_SUBTITLE } from "@/constants";
 import Link from "next/link";
 
@@ -14,31 +22,71 @@ const previewProducts = [
 export function Hero() {
    return (
       <section className="space-y-8">
-         <div>
-            <h1
-               className="font-calson-font text-2xl md:text-4xl font-semibold heading-1 tracking-wider"
-               style={{ fontFamily: "var(--calson-font)" }}>
-               {HERO_TITLE}
-            </h1>
-            <p className="mt-2 text-black text-md max-w-3xl">{HERO_SUBTITLE}</p>
+         <div className="relative overflow-hidden rounded-[32px] border border-black/5 bg-[#fcfcfa] px-6 py-7 shadow-[0_18px_60px_rgba(0,0,0,.06)] md:px-8 md:py-9">
+            <div className="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_20px_20px,rgba(15,107,79,.18)_1px,transparent_1px)] [background-size:28px_28px]" />
+            <div className="relative grid gap-8 lg:grid-cols-[1fr_390px]">
+               <div>
+                  <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-900/10 bg-emerald-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-emerald-800">
+                     <Sparkles className="size-4" />
+                     Live WhatsApp operations
+                  </div>
+                  <h1
+                     className="max-w-4xl font-normal italic leading-[0.96] tracking-[-0.055em] text-[#0a0a0a]"
+                     style={{
+                        fontFamily: "var(--calson-font)",
+                        fontSize: "clamp(52px, 8vw, 118px)",
+                     }}>
+                     {HERO_TITLE}
+                  </h1>
+                  <p className="mt-5 max-w-2xl text-[17px] leading-8 text-black/60">{HERO_SUBTITLE}</p>
+                  <div className="mt-7 flex flex-wrap gap-3">
+                     <Link href="/dashboard/products">
+                        <Button className="rounded-full bg-[#0a0a0a] px-6 py-6 text-white hover:bg-black/80">
+                           <PackagePlus className="size-4" />
+                           Add products
+                        </Button>
+                     </Link>
+                     <Link href="/dashboard/bot-settings">
+                        <Button variant="outline" className="rounded-full border-black/15 bg-white px-6 py-6">
+                           <BookOpen className="size-4" />
+                           Configure bot
+                        </Button>
+                     </Link>
+                  </div>
+               </div>
+
+               <div className="rounded-[28px] border border-black/10 bg-[#0f1411] p-4 text-white shadow-2xl">
+                  <div className="flex items-center justify-between rounded-3xl bg-white/[0.06] p-4">
+                     <div>
+                        <p className="text-sm font-bold">Today&apos;s sales assistant</p>
+                        <p className="text-xs font-semibold text-emerald-300">WAHA + Groq + M-Pesa</p>
+                     </div>
+                     <span className="grid size-10 place-items-center rounded-2xl bg-emerald-400/10">
+                        <Bot className="size-5 text-emerald-300" />
+                     </span>
+                  </div>
+                  <div className="mt-4 grid gap-3">
+                     {[
+                        [MessageCircle, "New question", "Show me what is available"],
+                        [Zap, "AI replied", "Sent product pictures and prices"],
+                        [CreditCard, "Payment", "STK push ready from chat"],
+                     ].map(([Icon, label, value]) => (
+                        <div key={label as string} className="flex items-center gap-3 rounded-3xl border border-white/10 bg-white/[0.04] p-4">
+                           <span className="grid size-10 place-items-center rounded-2xl bg-white/[0.06]">
+                              <Icon className="size-5 text-emerald-300" />
+                           </span>
+                           <div>
+                              <p className="text-xs text-white/45">{label as string}</p>
+                              <p className="text-sm font-semibold">{value as string}</p>
+                           </div>
+                        </div>
+                     ))}
+                  </div>
+               </div>
+            </div>
          </div>
 
-         <div className="flex gap-4 mb-6">
-            <Link href="/dashboard/products">
-               <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2">
-                  <PackagePlus className="size-4" />
-                  Add products
-               </Button>
-            </Link>
-            <Link href="/dashboard/bot-settings">
-               <Button variant="outline" className="px-6 py-3 rounded-lg flex items-center gap-2">
-                  <BookOpen className="size-4" />
-                  Configure bot
-               </Button>
-            </Link>
-         </div>
-
-         <div className="relative overflow-hidden rounded-2xl border bg-[#003F37] animate-chat-in-right">
+         <div className="relative overflow-hidden rounded-[32px] border border-black/5 bg-[#003F37] animate-chat-in-right shadow-[0_18px_60px_rgba(0,0,0,.10)]">
             <div className="absolute inset-0 opacity-70 bg-[radial-gradient(circle_at_20px_20px,rgba(255,255,255,.14)_1px,transparent_1px)] [background-size:28px_28px]" />
             <div className="relative grid gap-8 p-6 md:grid-cols-[1fr_360px] md:p-8">
                <div className="flex flex-col justify-between text-white">

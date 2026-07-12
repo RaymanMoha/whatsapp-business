@@ -1,10 +1,5 @@
-import { AuthLayout } from "@/components/auth-layout";
-import { SignUpForm } from "@/components/sign-up-form";
+import { WhatsappCommerceLanding } from "@/components/marketing/whatsapp-commerce-landing";
 
-export default function SignUpPage() {
-   return (
-      <AuthLayout>
-         <SignUpForm />
-      </AuthLayout>
-   );
+export default function HomePage() {
+   return <WhatsappCommerceLanding />;
 }
