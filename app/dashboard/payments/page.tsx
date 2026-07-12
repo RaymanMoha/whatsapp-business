@@ -3,6 +3,8 @@ import { MpesaPayments } from "@/components/commerce/mpesa-payments";
 import Heading from "@/components/heading";
 import { getMpesaStatus, listPayments } from "@/src/mpesa-store";
 
+export const dynamic = "force-dynamic";
+
 export default async function PaymentsPage() {
    const [mpesa, payments] = await Promise.all([getMpesaStatus(), listPayments()]);
 

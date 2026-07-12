@@ -4,6 +4,8 @@ import { FeatureGrid } from "@/components/dashboard/feature-grid"
 import { commerceStats } from "@/lib/commerce-data"
 import { getCommerceRuntimeStatus } from "@/lib/commerce-runtime"
 
+export const dynamic = "force-dynamic"
+
 export default async function DashboardPage() {
   const stats = commerceStats()
   const runtime = await getCommerceRuntimeStatus()

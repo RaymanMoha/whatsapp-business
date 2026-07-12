@@ -3,6 +3,8 @@ import { ProductCatalogManager } from "@/components/commerce/product-catalog-man
 import Heading from "@/components/heading";
 import { readProducts } from "@/src/product-store";
 
+export const dynamic = "force-dynamic";
+
 export default async function ProductsPage() {
    const products = await readProducts();
 
