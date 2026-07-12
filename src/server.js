@@ -3,6 +3,8 @@ import 'dotenv/config'
 import express from 'express'
 import { approvedKnowledge, businessProfile } from './knowledge.js'
 import { appendConversationEvent } from './message-store.js'
+import { initiateStkPush } from './mpesa.js'
+import { getMpesaStatus } from './mpesa-store.js'
 import { findProductsForMessage, readProducts } from './product-store.js'
 
 const app = express()
@@ -26,6 +28,7 @@ const config = {
 }
 
 const conversations = new Map()
+const pendingProducts = new Map()
 const seenMessageIds = new Set()
 
 app.get('/health', (_request, response) => {
@@ -59,9 +62,13 @@ app.post('/webhook', async (request, response) => {
       status: 'received',
     })
     const products = await readProducts()
-    const reply = await buildReply(incoming, products)
+    const paymentReply = await buildPaymentReply(incoming, products)
+    const reply = paymentReply || await buildReply(incoming, products)
     await sendWhatsAppText(incoming.chatId, reply, incoming.session)
-    await sendRelevantProductImages(incoming, products)
+    if (!paymentReply) {
+      await sendRelevantProductImages(incoming, products)
+      rememberPendingProduct(incoming.chatId, incoming.text, products)
+    }
     await appendConversationEvent({
       id: `${incoming.id}-reply`,
       chatId: incoming.chatId,
@@ -99,13 +106,16 @@ app.post('/test/reply', async (request, response) => {
   }
 
   const products = await readProducts()
-  const reply = await buildReply({
+  const incoming = {
     id: `test-${Date.now()}`,
     chatId,
     session: config.wahaSession,
     text: message,
     fromMe: false,
-  }, products)
+  }
+  const paymentReply = await buildPaymentReply(incoming, products)
+  const reply = paymentReply || await buildReply(incoming, products)
+  if (!paymentReply) rememberPendingProduct(chatId, message, products)
 
   response.json({
     reply,
@@ -146,11 +156,104 @@ function extractIncomingMessage(body) {
   }
 }
 
+async function buildPaymentReply(incoming, products) {
+  if (!isPaymentIntent(incoming.text)) return null
+
+  const product = resolvePaymentProduct(incoming.chatId, incoming.text, products)
+  if (!product) {
+    return 'Which product would you like to pay for? Reply with the product name, for example: "pay for Organic Honey".'
+  }
+
+  if (!product.available) {
+    return `${product.name} is currently sold out, so I cannot start payment for it.`
+  }
+
+  const phone = extractPaymentPhone(incoming.text) || extractPhoneFromChatId(incoming.chatId)
+  if (!phone) {
+    return `Send the M-Pesa phone number for ${product.name}, for example: "pay for ${product.name} 2547XXXXXXX".`
+  }
+
+  const mpesa = getMpesaStatus()
+  if (!mpesa.configured) {
+    return `M-Pesa is not fully configured yet. Missing: ${mpesa.missing.join(', ')}.`
+  }
+
+  try {
+    const payment = await initiateStkPush({
+      phone,
+      amount: product.price,
+      accountReference: product.id,
+      description: `${product.name} WhatsApp order`,
+    })
+    pendingProducts.delete(incoming.chatId)
+    return [
+      `Payment request sent for ${product.name}.`,
+      `Amount: KES ${product.price}.`,
+      payment.customerMessage || 'Check your phone and enter your M-Pesa PIN to complete payment.',
+    ].join('\n')
+  } catch (error) {
+    return `I could not start the M-Pesa payment for ${product.name}: ${error.message}`
+  }
+}
+
 function extractText(payload) {
   if (typeof payload?.body === 'string') return payload.body
   if (typeof payload?.text === 'string') return payload.text
   if (typeof payload?.message?.text === 'string') return payload.message.text
   if (typeof payload?._data?.body === 'string') return payload._data.body
+  return ''
+}
+
+function isPaymentIntent(text) {
+  const lower = String(text || '').toLowerCase()
+  return [
+    'pay',
+    'payment',
+    'checkout',
+    'check out',
+    'buy now',
+    'place order',
+    'take one',
+    'i will take',
+    "i'll take",
+    'mpesa',
+    'm-pesa',
+    'stk',
+  ].some((phrase) => lower.includes(phrase))
+}
+
+function resolvePaymentProduct(chatId, text, products) {
+  const [matchedProduct] = findProductsForMessage(products, text, 1)
+  if (matchedProduct) {
+    pendingProducts.set(chatId, matchedProduct)
+    return matchedProduct
+  }
+
+  return pendingProducts.get(chatId) || null
+}
+
+function rememberPendingProduct(chatId, text, products) {
+  const [matchedProduct] = findProductsForMessage(products, text, 1)
+  if (matchedProduct) {
+    pendingProducts.set(chatId, matchedProduct)
+  }
+}
+
+function extractPaymentPhone(text) {
+  const match = String(text || '').match(/(?:\+?254|0)?7\d{8}/)
+  return match ? normalizePaymentPhone(match[0]) : ''
+}
+
+function extractPhoneFromChatId(chatId) {
+  const digits = String(chatId || '').split('@')[0]?.replace(/\D/g, '') || ''
+  return normalizePaymentPhone(digits)
+}
+
+function normalizePaymentPhone(phone) {
+  const digits = String(phone || '').replace(/\D/g, '')
+  if (digits.startsWith('254') && digits.length === 12) return digits
+  if (digits.startsWith('0') && digits.length === 10) return `254${digits.slice(1)}`
+  if (digits.startsWith('7') && digits.length === 9) return `254${digits}`
   return ''
 }
 
