@@ -53,7 +53,7 @@ export async function initiateStkPush(input) {
     Timestamp: stamp,
     TransactionType: config.transactionType,
     Amount: amount,
-    PartyA: phone,
+    PartyA: config.partyA || phone,
     PartyB: config.businessShortCode,
     PhoneNumber: phone,
     CallBackURL: config.callbackUrl,

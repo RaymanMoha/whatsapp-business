@@ -12,6 +12,7 @@ export function getMpesaConfig() {
     consumerKey: process.env.MPESA_CONSUMER_KEY || '',
     consumerSecret: process.env.MPESA_CONSUMER_SECRET || '',
     businessShortCode: process.env.MPESA_BUSINESS_SHORT_CODE || '',
+    partyA: process.env.MPESA_PARTY_A || '',
     passKey: process.env.MPESA_PASSKEY || '',
     transactionType: process.env.MPESA_TRANSACTION_TYPE || 'CustomerPayBillOnline',
     callbackUrl: process.env.MPESA_CALLBACK_URL || '',
@@ -32,6 +33,7 @@ export function getMpesaStatus() {
     missing,
     environment: config.environment,
     shortCode: config.businessShortCode || null,
+    partyA: config.partyA || null,
     callbackUrl: config.callbackUrl || null,
   }
 }
