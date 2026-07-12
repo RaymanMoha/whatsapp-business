@@ -1,10 +1,26 @@
 import 'dotenv/config'
 
 import express from 'express'
+import {
+  addCartItems,
+  extractCartQuantity,
+  formatCartSummary,
+  getCartItemCount,
+  getCartTotal,
+  isAddToCartIntent,
+  isClearCartIntent,
+  isRemoveFromCartIntent,
+  isViewCartIntent,
+  matchCartProducts,
+  removeCartItems,
+  revalidateCartItems,
+} from './cart.js'
+import { clearCart, getCart, saveCart } from './cart-store.js'
 import { approvedKnowledge, businessProfile } from './knowledge.js'
 import { appendConversationEvent } from './message-store.js'
 import { initiateStkPush } from './mpesa.js'
 import { getMpesaStatus, listRecentPaymentsForChat } from './mpesa-store.js'
+import { getMongoStatus } from './mongodb.js'
 import { findProductsForMessage, readProducts } from './product-store.js'
 import { sendWahaText } from './waha.js'
 
@@ -33,12 +49,15 @@ const pendingProducts = new Map()
 const pendingPayments = new Map()
 const seenMessageIds = new Set()
 
-app.get('/health', (_request, response) => {
-  response.json({
-    ok: true,
+app.get('/health', async (_request, response) => {
+  const mongo = await getMongoStatus()
+  const ok = Boolean(config.groqApiKey) && mongo.connected
+  response.status(ok ? 200 : 503).json({
+    ok,
     service: 'waha-groq-bot',
     businessName: config.businessName,
     groqConfigured: Boolean(config.groqApiKey),
+    mongo,
   })
 })
 
@@ -64,10 +83,12 @@ app.post('/webhook', async (request, response) => {
       status: 'received',
     })
     const products = await readProducts()
-    const paymentReply = await buildPaymentReply(incoming, products)
-    const reply = paymentReply || await buildReply(incoming, products)
+    const cartReply = await buildCartReply(incoming, products)
+    const paymentReply = cartReply ? null : await buildPaymentReply(incoming, products)
+    const commerceReply = cartReply || paymentReply
+    const reply = commerceReply || await buildReply(incoming, products)
     await sendWhatsAppText(incoming.chatId, reply, incoming.session)
-    if (!paymentReply) {
+    if (!commerceReply) {
       await sendRelevantProductImages(incoming, products)
       rememberPendingProduct(incoming.chatId, incoming.text, products)
     }
@@ -115,9 +136,11 @@ app.post('/test/reply', async (request, response) => {
     text: message,
     fromMe: false,
   }
-  const paymentReply = await buildPaymentReply(incoming, products)
-  const reply = paymentReply || await buildReply(incoming, products)
-  if (!paymentReply) rememberPendingProduct(chatId, message, products)
+  const cartReply = await buildCartReply(incoming, products)
+  const paymentReply = cartReply ? null : await buildPaymentReply(incoming, products)
+  const commerceReply = cartReply || paymentReply
+  const reply = commerceReply || await buildReply(incoming, products)
+  if (!commerceReply) rememberPendingProduct(chatId, message, products)
 
   response.json({
     reply,
@@ -158,36 +181,106 @@ function extractIncomingMessage(body) {
   }
 }
 
+async function buildCartReply(incoming, products) {
+  const chatId = incoming.chatId
+  const currentCart = await getCart(chatId)
+
+  if (isClearCartIntent(incoming.text)) {
+    await clearCart(chatId)
+    pendingPayments.delete(chatId)
+    return 'Your cart is now empty. Ask me to show the available products whenever you are ready.'
+  }
+
+  if (isRemoveFromCartIntent(incoming.text)) {
+    const matched = matchCartProducts(products, incoming.text)
+    if (!currentCart.length) return 'Your cart is empty.'
+    if (!matched.length) {
+      return `${formatCartSummary(currentCart)}\n\nTell me which product to remove, for example: "remove Green Tea from cart".`
+    }
+
+    const nextCart = removeCartItems(currentCart, matched.map((product) => product.id))
+    await saveCart(chatId, nextCart)
+    return nextCart.length
+      ? `Removed ${matched.map((product) => product.name).join(', ')}.\n\n${formatCartSummary(nextCart)}\n\nReply "pay cart" when ready.`
+      : 'Removed. Your cart is now empty.'
+  }
+
+  if (isAddToCartIntent(incoming.text)) {
+    const matched = matchCartProducts(products, incoming.text)
+    if (!matched.length) {
+      return 'Which product should I add? Use its product name, for example: "add Organic Honey to cart".'
+    }
+
+    const unavailable = matched.filter((product) => !product.available || Number(product.stock || 0) < 1)
+    const available = matched.filter((product) => product.available && Number(product.stock || 0) > 0)
+    const quantity = matched.length === 1 ? extractCartQuantity(incoming.text) : 1
+    const nextCart = addCartItems(currentCart, available, quantity)
+    await saveCart(chatId, nextCart)
+    if (available.length) pendingProducts.set(chatId, available.at(-1))
+
+    const messages = []
+    if (available.length) {
+      messages.push(`Added ${available.map((product) => product.name).join(', ')} to your cart.`)
+    }
+    if (unavailable.length) {
+      messages.push(`Not added: ${unavailable.map((product) => `${product.name} is sold out`).join(', ')}.`)
+    }
+    if (nextCart.length) {
+      messages.push(formatCartSummary(nextCart), 'Reply "pay cart" when ready, or keep adding products.')
+    }
+    return messages.join('\n\n')
+  }
+
+  if (isViewCartIntent(incoming.text)) {
+    return currentCart.length
+      ? `${formatCartSummary(currentCart)}\n\nReply "pay cart" to receive one M-Pesa prompt for the total.`
+      : 'Your cart is empty. Say "add Organic Honey to cart" to get started.'
+  }
+
+  return null
+}
+
 async function buildPaymentReply(incoming, products) {
   const hasPaymentIntent = isPaymentIntent(incoming.text)
   const pendingPayment = pendingPayments.get(incoming.chatId) || null
+  const currentCart = await getCart(incoming.chatId)
   const typedPhone = extractPaymentPhone(incoming.text)
   const shouldContinuePayment = Boolean(
     hasPaymentIntent ||
       pendingPayment ||
+      (currentCart.length && typedPhone) ||
       (pendingProducts.has(incoming.chatId) && typedPhone),
   )
 
   if (!shouldContinuePayment) return null
 
-  const product = resolvePaymentProduct(incoming.chatId, incoming.text, products)
-  if (!product) {
-    pendingPayments.set(incoming.chatId, { requestedAt: new Date().toISOString() })
-    return 'Which product would you like to pay for? Reply with the product name, for example: "pay for Organic Honey".'
+  let requestedItems = currentCart
+  if (!requestedItems.length) {
+    const product = resolvePaymentProduct(incoming.chatId, incoming.text, products)
+    if (product) {
+      requestedItems = addCartItems([], [product], 1)
+    }
   }
 
-  if (!product.available) {
-    return `${product.name} is currently sold out, so I cannot start payment for it.`
+  if (!requestedItems.length) {
+    pendingPayments.set(incoming.chatId, { requestedAt: new Date().toISOString() })
+    return 'Your cart is empty. Add products first, for example: "add Organic Honey and Green Tea to cart".'
+  }
+
+  const { items, issues } = revalidateCartItems(requestedItems, products)
+  if (issues.length) {
+    return `I could not check out this cart:\n- ${issues.join('\n- ')}\n\nUpdate your cart and try again.`
   }
 
   pendingPayments.set(incoming.chatId, {
     requestedAt: pendingPayment?.requestedAt || new Date().toISOString(),
-    productId: product.id,
+    productId: items.length === 1 ? items[0].productId : null,
+    lineItems: items,
   })
 
   const phone = typedPhone || extractPhoneFromChatId(incoming.chatId)
   if (!phone) {
-    return `Send the M-Pesa phone number for ${product.name}, for example: "2547XXXXXXX".`
+    return `${formatCartSummary(items)}\n\nSend the M-Pesa phone number, for example: "2547XXXXXXX".`
   }
 
   const mpesa = getMpesaStatus()
@@ -196,26 +289,31 @@ async function buildPaymentReply(incoming, products) {
   }
 
   try {
+    const amount = getCartTotal(items)
+    const itemCount = getCartItemCount(items)
+    const productName = items.length === 1 ? items[0].name : `${itemCount}-item cart`
     const payment = await initiateStkPush({
       phone,
-      amount: product.price,
-      accountReference: product.id,
-      description: `${product.name} WhatsApp order`,
+      amount,
+      accountReference: items.length === 1 ? items[0].productId : `CART${Date.now().toString(36)}`,
+      description: `${productName} WhatsApp order`,
       chatId: incoming.chatId,
       customerName: incoming.customerName,
-      productId: product.id,
-      productName: product.name,
+      productId: items.length === 1 ? items[0].productId : null,
+      productName,
+      lineItems: items,
+      itemCount,
       source: 'whatsapp',
     })
     pendingProducts.delete(incoming.chatId)
     pendingPayments.delete(incoming.chatId)
+    await clearCart(incoming.chatId)
     return [
-      `Payment request sent for ${product.name}.`,
-      `Amount: KES ${product.price}.`,
+      formatCartSummary(items, 'Payment request'),
       payment.customerMessage || 'Check your phone and enter your M-Pesa PIN to complete payment.',
     ].join('\n')
   } catch (error) {
-    return `I could not start the M-Pesa payment for ${product.name}: ${error.message}`
+    return `I could not start the M-Pesa payment for this cart: ${error.message}`
   }
 }
 
@@ -330,7 +428,9 @@ async function buildPaymentContext(chatId) {
   return payments
     .slice(0, 5)
     .map((payment, index) => {
-      const product = payment.productName || payment.accountReference || 'order'
+      const product = Array.isArray(payment.lineItems) && payment.lineItems.length
+        ? payment.lineItems.map((item) => `${item.quantity} x ${item.name}`).join(', ')
+        : payment.productName || payment.accountReference || 'order'
       const receipt = payment.mpesaReceiptNumber ? ` Receipt: ${payment.mpesaReceiptNumber}.` : ''
       return `${index + 1}. ${product}: KES ${payment.amount}, status ${payment.status}.${receipt}`
     })

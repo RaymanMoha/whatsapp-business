@@ -28,9 +28,13 @@ export async function POST(request: NextRequest) {
 
       if (callback.ResultCode === 0 && payment?.chatId && !payment.confirmationSentAt) {
          const productName = payment.productName || payment.accountReference || "your order";
+         const items = Array.isArray(payment.lineItems) && payment.lineItems.length
+            ? payment.lineItems.map((item: { quantity?: number; name?: string }) => `${item.quantity || 1} x ${item.name || "item"}`)
+            : [productName];
          const receipt = metadata.MpesaReceiptNumber ? `\nReceipt: ${metadata.MpesaReceiptNumber}` : "";
          const message = [
-            `Payment received for ${productName}.`,
+            "Payment received for your order.",
+            ...items,
             `Amount: KES ${payment.amount}.`,
             `Your order is confirmed.${receipt}`,
          ].join("\n");
@@ -58,7 +62,7 @@ export async function POST(request: NextRequest) {
             await sendWahaFile(
                targetChatId,
                receipt,
-               `Your receipt for ${payment.productName || payment.accountReference || "your order"}. Thank you for your payment.`,
+               "Your itemised order receipt. Thank you for your payment.",
             );
             const receiptSharedAt = await markReceiptShared(payment.id);
             await updatePaymentByCheckoutRequestId(checkoutRequestId, {

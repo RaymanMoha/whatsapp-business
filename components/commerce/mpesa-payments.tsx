@@ -16,6 +16,14 @@ type Payment = {
    customerName?: string | null;
    productId?: string | null;
    productName?: string | null;
+   lineItems?: Array<{
+      productId?: string;
+      name: string;
+      unitPrice: number;
+      quantity: number;
+      lineTotal: number;
+   }>;
+   itemCount?: number;
    source?: string | null;
    customerMessage?: string;
    responseDescription?: string;
@@ -197,7 +205,11 @@ export function MpesaPayments({
                   <div key={payment.id} className="min-w-0 rounded-xl border p-4">
                      <div className="flex flex-wrap items-center justify-between gap-2">
                         <div>
-                           <strong>{payment.productName || payment.accountReference || payment.phone}</strong>
+                           <strong>
+                              {payment.lineItems?.length
+                                 ? `${payment.itemCount || payment.lineItems.reduce((total, item) => total + item.quantity, 0)}-item order`
+                                 : payment.productName || payment.accountReference || payment.phone}
+                           </strong>
                            <p className="text-xs text-zinc-500">
                               {payment.customerName || payment.chatId || payment.phone}
                            </p>
@@ -216,6 +228,16 @@ export function MpesaPayments({
                      <p className="mt-2 break-all text-sm text-zinc-700">
                         KES {payment.amount} · {payment.phone}
                      </p>
+                     {payment.lineItems?.length ? (
+                        <div className="mt-3 space-y-1 rounded-xl bg-zinc-50 p-3 text-xs text-zinc-700">
+                           {payment.lineItems.map((item) => (
+                              <div key={item.productId || item.name} className="flex items-center justify-between gap-3">
+                                 <span>{item.quantity} × {item.name}</span>
+                                 <strong>KES {item.lineTotal}</strong>
+                              </div>
+                           ))}
+                        </div>
+                     ) : null}
                      <div className="mt-2 flex flex-wrap gap-2 text-xs">
                         <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-zinc-700">
                            {payment.source === "whatsapp" ? "WhatsApp order" : "Dashboard request"}

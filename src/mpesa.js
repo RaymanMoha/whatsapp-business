@@ -80,6 +80,8 @@ export async function initiateStkPush(input) {
     customerName: input.customerName || null,
     productId: input.productId || null,
     productName: input.productName || null,
+    lineItems: Array.isArray(input.lineItems) ? input.lineItems : [],
+    itemCount: Number(input.itemCount || 0),
     source: input.source || 'dashboard',
     merchantRequestId: data.MerchantRequestID || null,
     checkoutRequestId: data.CheckoutRequestID || null,

@@ -26,6 +26,8 @@ export async function ensurePaymentReceipt(payment) {
     phone: payment.phone || null,
     amount: payment.amount,
     productName: payment.productName || payment.accountReference || 'WhatsApp order',
+    lineItems: Array.isArray(payment.lineItems) ? payment.lineItems : [],
+    itemCount: Number(payment.itemCount || 0),
     createdAt: now,
     updatedAt: now,
     sharedAt: null,

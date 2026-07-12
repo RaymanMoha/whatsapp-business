@@ -74,6 +74,21 @@ curl -s http://localhost:8080/test/reply \
   -d '{"message":"What time are you open?"}'
 ```
 
+## Combined cart payments
+
+Customers can build and pay for a multi-product cart directly in WhatsApp. Supported messages include:
+
+```txt
+add Organic Honey and Green Tea to cart
+add 2 California Almonds to cart
+show my cart
+remove Green Tea from cart
+clear cart
+pay cart
+```
+
+At checkout, the bot rechecks product availability and stock, calculates one combined total, and sends one M-Pesa STK Push. The payment record and PDF receipt retain every product, quantity, unit price, and line total. Carts are stored in MongoDB when `MONGODB_URI` is configured and use an in-memory fallback during local development.
+
 ## Business knowledge
 
 Edit:

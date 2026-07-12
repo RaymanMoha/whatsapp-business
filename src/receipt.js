@@ -47,6 +47,9 @@ export async function createReceiptPdf(payment) {
   const businessName = safeText(process.env.BUSINESS_NAME, 'WhatsAppBase')
   const receiptNumber = safeText(payment.mpesaReceiptNumber, payment.id)
   const productName = safeText(payment.productName, payment.accountReference || 'WhatsApp order')
+  const lineItems = Array.isArray(payment.lineItems) && payment.lineItems.length
+    ? payment.lineItems.slice(0, 5)
+    : [{ name: productName, quantity: 1, unitPrice: Number(payment.amount || 0), lineTotal: Number(payment.amount || 0) }]
   const customer = safeText(payment.customerName, payment.phone)
   const phone = safeText(payment.phone)
   const paidAt = formatDate(payment.paidAt || payment.updatedAt || payment.createdAt)
@@ -62,23 +65,38 @@ export async function createReceiptPdf(payment) {
   page.drawText(`KES ${formatMoney(payment.amount)}`, { x: 28, y: 414, size: 30, font: bold, color: INK })
   page.drawText('Payment received successfully', { x: 28, y: 393, size: 10, font: regular, color: MUTED })
 
+  page.drawText('ORDER ITEMS', { x: 28, y: 363, size: 7.5, font: bold, color: MUTED })
+  let y = 341
+  for (const item of lineItems) {
+    const name = fitText(item.name, regular, 9.5, 180)
+    const detail = `${Number(item.quantity || 1)} x KES ${formatMoney(item.unitPrice)}`
+    const total = `KES ${formatMoney(item.lineTotal)}`
+    page.drawText(name, { x: 28, y, size: 9.5, font: bold, color: INK })
+    page.drawText(detail, { x: 212, y, size: 8.5, font: regular, color: MUTED })
+    const totalWidth = bold.widthOfTextAtSize(total, 8.5)
+    page.drawText(total, { x: 392 - totalWidth, y, size: 8.5, font: bold, color: INK })
+    y -= 24
+  }
+  if (Array.isArray(payment.lineItems) && payment.lineItems.length > lineItems.length) {
+    page.drawText(`+ ${payment.lineItems.length - lineItems.length} more items`, { x: 28, y, size: 8.5, font: regular, color: MUTED })
+  }
+
   const rows = [
     ['Receipt number', receiptNumber],
-    ['Paid for', productName],
     ['Customer', customer],
     ['Phone', phone],
     ['Paid at', paidAt],
     ['Payment method', 'M-Pesa'],
   ]
 
-  let y = 345
+  y -= 8
   for (const [label, value] of rows) {
-    page.drawLine({ start: { x: 28, y: y + 24 }, end: { x: 392, y: y + 24 }, thickness: 0.6, color: rgb(0.82, 0.82, 0.78) })
+    page.drawLine({ start: { x: 28, y: y + 18 }, end: { x: 392, y: y + 18 }, thickness: 0.6, color: rgb(0.82, 0.82, 0.78) })
     page.drawText(label.toUpperCase(), { x: 28, y, size: 7.5, font: bold, color: MUTED })
     const clipped = fitText(value, regular, 10, 225)
     const textWidth = regular.widthOfTextAtSize(clipped, 10)
     page.drawText(clipped, { x: Math.max(160, 392 - textWidth), y: y - 1, size: 10, font: regular, color: INK })
-    y -= 44
+    y -= 30
   }
 
   page.drawRectangle({ x: 28, y: 30, width: 364, height: 48, color: rgb(0.9, 0.94, 0.9) })
