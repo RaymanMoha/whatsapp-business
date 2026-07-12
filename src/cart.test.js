@@ -7,6 +7,7 @@ import {
   getCartItemCount,
   getCartTotal,
   isAddToCartIntent,
+  isProductSelectionIntent,
   isRemoveFromCartIntent,
   isViewCartIntent,
   matchCartProducts,
@@ -31,6 +32,19 @@ test('matches multiple products and creates a combined cart', () => {
   assert.equal(getCartItemCount(cart), 2)
   assert.equal(getCartTotal(cart), 2)
   assert.match(formatCartSummary(cart), /Total: KES 2/)
+})
+
+test('treats a short multi-product reply as a cart selection', () => {
+  const catalog = [
+    { id: 'almonds', name: 'California Almonds 500g', price: 1, stock: 5, available: true },
+    { id: 'honey', name: 'Organic Honey 500ml', price: 1, stock: 5, available: true },
+  ]
+  const message = 'California and organic honey'
+  const matched = matchCartProducts(catalog, message)
+
+  assert.deepEqual(matched.map((product) => product.id), ['almonds', 'honey'])
+  assert.equal(isProductSelectionIntent(message, matched), true)
+  assert.equal(isProductSelectionIntent('What is the price of California and organic honey?', matched), false)
 })
 
 test('supports quantity, removal, and stock limits', () => {

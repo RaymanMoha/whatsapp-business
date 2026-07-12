@@ -3,13 +3,14 @@ import Heading from "@/components/heading";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { IntegrationSettings } from "@/components/commerce/integration-settings";
 import type { SettingsPayload } from "@/components/commerce/integration-settings";
-import { commerceApprovedKnowledge } from "@/lib/commerce-data";
+import { readApprovedKnowledge } from "@/src/knowledge-store";
 import { getSettingsForDashboard } from "@/src/settings-store";
 
 export const dynamic = "force-dynamic";
 
 export default async function BotSettingsPage() {
    const settings = await getSettingsForDashboard() as SettingsPayload;
+   const approvedKnowledge = await readApprovedKnowledge();
 
    return (
       <DashboardLayout>
@@ -26,7 +27,7 @@ export default async function BotSettingsPage() {
                   <CardTitle>Approved knowledge used by the AI</CardTitle>
                </CardHeader>
                <CardContent className="space-y-3">
-                  {commerceApprovedKnowledge.map((entry) => (
+                  {approvedKnowledge.map((entry) => (
                      <div key={entry.topic} className="rounded-xl border p-4">
                         <strong>{entry.topic}</strong>
                         <p className="mt-1 text-sm text-zinc-600">{entry.content}</p>

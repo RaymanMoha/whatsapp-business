@@ -3,6 +3,8 @@ import Heading from "@/components/heading";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCommerceRuntimeStatus } from "@/lib/commerce-runtime";
 
+export const dynamic = "force-dynamic";
+
 export default async function SessionPage() {
    const status = await getCommerceRuntimeStatus();
 

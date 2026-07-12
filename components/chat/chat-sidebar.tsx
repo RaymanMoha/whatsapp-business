@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { useThreads } from "@/lib/chat-store";
 import type { ChatThread } from "@/types";
 import { useToast } from "@/components/ui/use-toast";
-import { Plus, MoreHorizontal, Search, MessageSquareText, PanelRightOpen, PanelRightClose } from "lucide-react";
+import { Plus, MoreHorizontal, Search, MessageSquareText, PanelRightOpen, PanelRightClose, Bot } from "lucide-react";
 import ParternBg from "@/public/pattern-bg.png";
 import {
    DropdownMenu,
@@ -19,7 +19,6 @@ import {
    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Image from "next/image";
-import Logo from "@/public/logore.png";
 import { PLACEHOLDER_SEARCH, ARIA_SEARCH_CHATS, LABEL_CHAT_HISTORY, LABEL_NO_CHATS_YET, BTN_UNDO } from "@/constants";
 
 type Group = { label: string; items: ChatThread[] };
@@ -168,15 +167,8 @@ export function ChatSidebar({
                collapsed ? "px-0" : "px-4"
             } py-4`}>
             <Link href="/dashboard" className="flex items-center gap-2">
-               <Image
-                  src={Logo.src}
-                  alt="Reon Capital logo"
-                  width={24}
-                  height={24}
-                  className="object-contain"
-                  priority
-               />
-               <span className="font-semibold text-white">Reon Capital</span>
+               <span className="grid size-8 place-items-center rounded-full bg-emerald-400 text-emerald-950"><Bot className="size-4" /></span>
+               <span className="font-semibold text-white">Commerce AI</span>
             </Link>
             <div className="flex items-center">
                <Button

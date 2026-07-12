@@ -1,23 +1,32 @@
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Hero } from "@/components/dashboard/hero"
 import { FeatureGrid } from "@/components/dashboard/feature-grid"
-import { commerceStats } from "@/lib/commerce-data"
 import { getCommerceRuntimeStatus } from "@/lib/commerce-runtime"
+import { readProducts } from "@/src/product-store"
+import { listConversationSummaries } from "@/src/message-store"
+import { listOrders } from "@/src/order-store"
 
 export const dynamic = "force-dynamic"
 
 export default async function DashboardPage() {
-  const stats = commerceStats()
-  const runtime = await getCommerceRuntimeStatus()
+  const [products, conversations, orders, runtime] = await Promise.all([
+    readProducts(),
+    listConversationSummaries(),
+    listOrders(),
+    getCommerceRuntimeStatus(),
+  ])
+  const available = products.filter((product) => product.available && product.stock > 0).length
+  const stock = products.reduce((total, product) => total + Number(product.stock || 0), 0)
+  const activeOrders = orders.filter((order) => !["Completed", "Cancelled"].includes(order.status)).length
 
   return (
     <DashboardLayout>
-      <Hero />
+      <Hero catalogCount={products.length} connectionStatus={runtime.messaging.status} />
       <section className="grid gap-4 pt-6 md:grid-cols-4">
         {[
-          ["Available products", `${stats.available}/${stats.total}`, "from shared catalog"],
-          ["Stock units", String(stats.stock), "current demo inventory"],
-          ["AI reply rate", `${stats.replyRate}%`, `${stats.questions} reviewed questions`],
+          ["Available products", `${available}/${products.length}`, "live catalog availability"],
+          ["Stock units", String(stock), "units ready to sell"],
+          ["Active orders", String(activeOrders), `${conversations.length} customer conversations`],
           ["WhatsApp connection", runtime.messaging.status, runtime.messaging.phone || "phone not connected"],
         ].map(([label, value, note]) => (
           <div key={label} className="rounded-xl border border-zinc-300 bg-white/50 p-4 text-black">

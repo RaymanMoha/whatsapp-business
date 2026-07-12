@@ -70,9 +70,6 @@ export const navGroups: NavGroup[] = [
    { id: "ask-anything", label: "Ask Commerce AI", href: "/dashboard/chat" },
 ];
 
-// Convenience re-exports for constants defined in other modules
-export { sampleThreads } from "@/lib/chat-samples";
-
 export const HERO_TITLE = "WhatsApp Commerce Hub";
 export const HERO_SUBTITLE =
    "Manage product pictures, availability, customer questions, and AI replies from one private WhatsApp commerce system.";

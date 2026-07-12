@@ -39,6 +39,12 @@ export async function appendConversationEvent(event) {
       timestamp: event.timestamp || now,
     }
 
+    const duplicate = await db.collection('conversations').findOne(
+      { chatId, 'messages.id': message.id },
+      { projection: { _id: 1 } },
+    )
+    if (duplicate) return
+
     await db.collection('conversations').updateOne(
       { chatId },
       {

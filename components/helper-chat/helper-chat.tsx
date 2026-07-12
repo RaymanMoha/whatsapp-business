@@ -5,9 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { usePathname, useRouter } from "next/navigation"
-import { X, Trash2 } from "lucide-react"
+import { Bot, X, Trash2 } from "lucide-react"
 import { useHelperChat, helperAssistantReply, type HelperMessage } from "@/lib/helper-chat-store"
-import Logo from "@/public/logore.png"
 import ParternBg from "@/public/pattern-bg.png"
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import Image from "next/image"
@@ -48,7 +47,7 @@ export function HelperChat() {
   React.useEffect(() => {
     // Load persisted open preference
     try {
-      const saved = localStorage.getItem("disruptor.helper.open.v1")
+      const saved = localStorage.getItem("whatsapp-commerce.helper.open.v1")
       if (saved !== null) setOpen(saved === "1")
     } catch {}
   }, [])
@@ -76,7 +75,7 @@ export function HelperChat() {
       }, 0)
     }
     try {
-      localStorage.setItem("disruptor.helper.open.v1", open ? "1" : "0")
+      localStorage.setItem("whatsapp-commerce.helper.open.v1", open ? "1" : "0")
     } catch {}
   }, [open])
 
@@ -166,7 +165,7 @@ export function HelperChat() {
                   aria-label="Open helper chat"
                   onClick={() => openPanel()}
                   className="relative rounded-full bg-[#E0B5FF] hover:bg-[#C380FF] shadow-lg transition-transform active:scale-95 hover:scale-[1.03] w-14 h-14 flex items-center justify-center overflow-hidden">
-                  <Image src={Logo.src} alt="Reon Capital" width={56} height={56} className="h-full w-full rounded-full object-cover" />
+                  <Bot className="size-6 text-emerald-950" />
                   {unread > 0 ? (
                     <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-red-600 text-white text-[10px] flex items-center justify-center">{unread}</span>
                   ) : null}
@@ -193,9 +192,9 @@ export function HelperChat() {
             <header className="relative flex items-center justify-between px-4 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center overflow-hidden">
-                  <Image src={Logo.src} alt="Reon Capital" width={32} height={32} className="h-full w-full rounded-full object-cover" />
+                  <Bot className="size-4" />
                 </div>
-                <span className="font-semibold">Reon Capital Assistant</span>
+                <span className="font-semibold">Commerce Assistant</span>
               </div>
               <div className="flex items-center gap-1">
                 <Button
@@ -243,18 +242,14 @@ import { Card, CardContent } from "@/components/ui/card"
 
 function Suggestions({ onPick }: { onPick: (text: string) => void }) {
   const pathname = usePathname()
-  const base = ["What does Ask Anything do?"]
-  const profile = ["How do I update my profile?", "How do I change my password?"]
-  const media = ["Where can I find media ecosystem reports?", "Show me spend by channel."]
-  const benchmarks = ["Where is benchmark performance by platform?"]
-  const investment = ["Open partner spend by month."]
-  const consumer = ["Where is Pipeline & Business Planning?"]
+  const base = ["What products are available?", "Show recent orders", "Which payments failed?"]
+  const products = ["Which products are low in stock?", "Which products have no picture?"]
+  const payments = ["Show recent payment status", "How does cart checkout work?"]
+  const customers = ["Which customers need a reply?", "What are customers asking?"]
   let items: string[] = base
-  if (pathname?.startsWith('/dashboard/profile')) items = [...profile, ...base]
-  else if (pathname?.startsWith('/dashboard/media')) items = [...media, ...base]
-  else if (pathname?.startsWith('/dashboard/benchmarks')) items = [...benchmarks, ...base]
-  else if (pathname?.startsWith('/dashboard/investment')) items = [...investment, ...base]
-  else if (pathname?.startsWith('/dashboard/consumer')) items = [...consumer, ...base]
+  if (pathname?.startsWith('/dashboard/products')) items = products
+  else if (pathname?.startsWith('/dashboard/payments')) items = payments
+  else if (pathname?.startsWith('/dashboard/customers') || pathname?.startsWith('/dashboard/questions')) items = customers
   return (
     <div className="mb-2">
       <div className="text-xs uppercase tracking-wide text-emerald-900/80 mb-3 font-semibold">Quick prompts</div>

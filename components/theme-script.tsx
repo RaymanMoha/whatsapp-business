@@ -2,11 +2,11 @@ export function ThemeScript() {
   const code = `
   try {
     // Always default to light mode unless explicitly set to dark
-    var t = localStorage.getItem('disruptor.theme');
+    var t = localStorage.getItem('commerce.theme');
     
     // If no theme is set, force light mode
     if (!t || t === 'light') {
-      localStorage.setItem('disruptor.theme', 'light');
+      localStorage.setItem('commerce.theme', 'light');
       document.documentElement.classList.remove('dark');
     } else if (t === 'dark') {
       // Only use dark if explicitly set
@@ -19,4 +19,3 @@ export function ThemeScript() {
   `
   return <script dangerouslySetInnerHTML={{ __html: code }} />
 }
-

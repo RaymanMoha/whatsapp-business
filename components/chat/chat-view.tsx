@@ -4,9 +4,8 @@ import * as React from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChatBubble } from "./chat-message";
 import { ChatComposer } from "./chat-composer";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Bot } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 import {
    useThreads,
    appendMessage,
@@ -16,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { LINK_BACK_TO_HOME, BTN_NEW_CHAT } from "@/constants";
-import Logo from "@/public/reon-capital-logo.svg";
 
 export function ChatView({ threadId }: { threadId: string }) {
    const { threads, update, newThread } = useThreads();
@@ -138,31 +136,10 @@ export function ChatView({ threadId }: { threadId: string }) {
                }`}>
                <div ref={viewportRef} className="flex flex-col gap-6 p-2">
                   {thread.messages.length === 0 ? (
-                     <div className="flex flex-col items-center text-center">
-                        <div className="mb-6">
-                           <Image
-                              src={Logo.src}
-                              alt="Reon Capital"
-                              width={200}
-                              height={60}
-                              className="object-contain"
-                           />
-                        </div>
-                        <h1
-                           className="text-7xl leading-18 mb-2"
-                           style={{ fontFamily: "var(--calson-font)" }}>
-                           Powering up{" "}
-                           <span
-                              style={{ fontFamily: "var(--secondary-font)" }}>
-                              knowledge{" "}
-                           </span>
-                           and{" "}
-                           <span
-                              style={{ fontFamily: "var(--secondary-font)" }}>
-                              tools{" "}
-                           </span>
-                           to work limitless.
-                        </h1>
+                     <div className="flex flex-col items-center px-4 text-center">
+                        <span className="grid size-14 place-items-center rounded-2xl bg-emerald-100 text-emerald-800"><Bot className="size-7" /></span>
+                        <h1 className="mt-5 text-4xl font-semibold tracking-tight sm:text-5xl" style={{ fontFamily: "var(--calson-font)" }}>Ask Commerce AI</h1>
+                        <p className="mt-3 max-w-xl text-base leading-7 text-zinc-500">Ask about live products, stock, orders, payments, customers, approved knowledge, or dashboard setup.</p>
                      </div>
                   ) : (
                      thread.messages.map((m) => (

@@ -9,14 +9,14 @@ function applyTheme(next: "light" | "dark") {
   const root = document.documentElement
   if (next === "dark") root.classList.add("dark")
   else root.classList.remove("dark")
-  try { localStorage.setItem("disruptor.theme", next) } catch {}
+  try { localStorage.setItem("commerce.theme", next) } catch {}
 }
 
 export function ThemeToggle({ compact = false }: { compact?: boolean }) {
   const [mode, setMode] = React.useState<"light" | "dark">("light")
   React.useEffect(() => {
     try {
-      const saved = localStorage.getItem("disruptor.theme") as "light" | "dark" | null
+      const saved = localStorage.getItem("commerce.theme") as "light" | "dark" | null
       const initial = saved ?? (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
       setMode(initial)
       applyTheme(initial)

@@ -1,5 +1,5 @@
 import { approvedKnowledge, businessProfile } from "@/src/knowledge";
-import { products, recentQuestions } from "@/src/catalog";
+import { products } from "@/src/catalog";
 
 export type CommerceProduct = {
    id: string;
@@ -13,16 +13,7 @@ export type CommerceProduct = {
    emoji: string;
 };
 
-export type CustomerQuestion = {
-   id: string;
-   customer: string;
-   time: string;
-   question: string;
-   status: string;
-};
-
 export const commerceProducts = products as CommerceProduct[];
-export const commerceQuestions = recentQuestions as CustomerQuestion[];
 export const commerceBusinessProfile = businessProfile;
 export const commerceApprovedKnowledge = approvedKnowledge;
 
@@ -41,18 +32,9 @@ export function availableProducts() {
 export function commerceStats() {
    const available = availableProducts().length;
    const total = commerceProducts.length;
-   const missed = commerceQuestions.filter((question) =>
-      question.status.toLowerCase().includes("missed"),
-   ).length;
-
    return {
       available,
       total,
       stock: commerceProducts.reduce((sum, product) => sum + product.stock, 0),
-      questions: commerceQuestions.length,
-      missed,
-      replyRate: commerceQuestions.length
-         ? Math.round(((commerceQuestions.length - missed) / commerceQuestions.length) * 100)
-         : 100,
    };
 }

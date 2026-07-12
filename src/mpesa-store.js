@@ -68,6 +68,12 @@ export async function getPaymentById(id) {
   return db.collection('payments').findOne({ id }, { projection: { _id: 0 } })
 }
 
+export async function getPaymentByCheckoutRequestId(checkoutRequestId) {
+  if (!isMongoConfigured() || !checkoutRequestId) return null
+  const db = await getMongoDb()
+  return db.collection('payments').findOne({ checkoutRequestId }, { projection: { _id: 0 } })
+}
+
 export async function updatePaymentById(id, updates) {
   if (!isMongoConfigured()) throw new Error('MongoDB is required for payments')
   const db = await getMongoDb()
@@ -109,4 +115,22 @@ export async function updatePaymentByCheckoutRequestId(checkoutRequestId, update
     },
   )
   return db.collection('payments').findOne({ checkoutRequestId }, { projection: { _id: 0 } })
+}
+
+export async function applyPaymentCallback(checkoutRequestId, updates) {
+  if (!isMongoConfigured()) throw new Error('MongoDB is required for payments')
+  const db = await getMongoDb()
+  const now = new Date().toISOString()
+  const result = await db.collection('payments').updateOne(
+    {
+      checkoutRequestId,
+      $or: [
+        { callbackProcessedAt: { $exists: false } },
+        { callbackProcessedAt: null },
+      ],
+    },
+    { $set: { ...updates, callbackProcessedAt: now, updatedAt: now } },
+  )
+  const payment = await db.collection('payments').findOne({ checkoutRequestId }, { projection: { _id: 0 } })
+  return { payment, duplicate: result.modifiedCount === 0 && Boolean(payment) }
 }

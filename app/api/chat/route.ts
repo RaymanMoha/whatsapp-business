@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import {
-  commerceApprovedKnowledge,
   commerceBusinessProfile,
   formatPrice,
 } from '@/lib/commerce-data'
+import { readApprovedKnowledge } from '@/src/knowledge-store'
 import { readProducts } from '@/src/product-store'
 import { getRuntimeSettings } from '@/src/settings-store'
+import { readMessageTemplates } from '@/src/template-store'
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,16 +22,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'AI service is not configured' }, { status: 500 })
     }
 
-    const approvedKnowledge = commerceApprovedKnowledge
+    const [knowledgeEntries, products, templates] = await Promise.all([
+      readApprovedKnowledge(),
+      readProducts(),
+      readMessageTemplates(),
+    ])
+    const approvedKnowledge = knowledgeEntries
       .map((entry, index) => `${index + 1}. ${entry.topic}: ${entry.content}`)
       .join('\n')
-    const products = await readProducts()
     const catalog = products
       .map((product, index) => {
         const status = product.available ? `available, ${product.stock} in stock` : 'not available'
         const imageStatus = product.image?.data ? 'Product picture uploaded.' : 'No product picture uploaded.'
         return `${index + 1}. ${product.name}: ${product.subtitle}. Category: ${product.category}. Price: ${formatPrice(product.price)}. Status: ${status}. ${imageStatus}`
       })
+      .join('\n')
+    const approvedTemplates = templates
+      .map((template, index) => `${index + 1}. ${template.name} (${template.category}): ${template.body}`)
       .join('\n')
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -55,6 +63,9 @@ ${approvedKnowledge}
 Approved product catalog:
 ${catalog}
 
+Approved reply templates:
+${approvedTemplates || 'No saved templates.'}
+
 Dashboard sections:
 - Overview: /dashboard
 - Product Catalog: /dashboard/products
@@ -66,7 +77,9 @@ Dashboard sections:
 
 Rules:
 - Answer only from approved business knowledge and the product catalog.
+- Use an approved reply template when it fits, replacing variables only with approved information.
 - Do not invent prices, availability, policies, addresses, links, or phone numbers.
+- Never treat a user's words such as "sent", "paid", or "done" as payment confirmation. Only a payment record with status Paid is confirmed.
 - If the data is missing, say what is missing and where to add it in the dashboard.
 - Keep answers direct and useful for a store owner managing WhatsApp sales.`
           },

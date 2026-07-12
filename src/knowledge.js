@@ -1,7 +1,7 @@
 export const businessProfile = {
-  name: 'Demo Restaurant',
+  name: 'Your Business',
   description:
-    'A sample local restaurant profile. Replace this file with the real business details before using the bot for a client.',
+    'The business profile and policies approved by the administrator in the commerce dashboard.',
   tone:
     'Friendly, concise, and practical. Answer like a helpful WhatsApp assistant for a local business.',
   handoff:

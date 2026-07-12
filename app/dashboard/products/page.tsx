@@ -11,10 +11,12 @@ export default async function ProductsPage() {
    return (
       <DashboardLayout>
          <div className="space-y-6">
-            <Heading
-               title="Product Catalog"
-               description="The approved product list the WhatsApp AI can use when customers ask what is available."
-            />
+            <div className="pl-9 sm:pl-0">
+               <Heading
+                  title="Product Catalog"
+                  description="The approved product list the WhatsApp AI can use when customers ask what is available."
+               />
+            </div>
             <ProductCatalogManager initialProducts={products} />
          </div>
       </DashboardLayout>

@@ -29,7 +29,7 @@ export function UserMenu() {
       if (!mounted) return
       if (res.ok) {
         setEmail(res.profile.email)
-        const key = `disruptor.profile.avatar.${res.profile.email.toLowerCase()}`
+        const key = `commerce.profile.avatar.${res.profile.email.toLowerCase()}`
         setAvatarSrc(localStorage.getItem(key))
       }
     })()
@@ -39,7 +39,7 @@ export function UserMenu() {
     }
     function onStorage(ev: StorageEvent) {
       if (!email) return
-      const key = `disruptor.profile.avatar.${email.toLowerCase()}`
+      const key = `commerce.profile.avatar.${email.toLowerCase()}`
       if (ev.key === key) setAvatarSrc(ev.newValue)
     }
     window.addEventListener("profile:avatar", onAvatar as EventListener)
@@ -65,8 +65,8 @@ export function UserMenu() {
      <DropdownMenu>
         <DropdownMenuTrigger aria-label="Open user menu">
             <Avatar className="size-10 ring-1 ring-border border-emerald-700 border-2 cursor-pointer hover:border-emerald-500 transition-colors">
-               <AvatarImage src={avatarSrc ?? "https://i.pravatar.cc/100?img=5"} alt="User" />
-               <AvatarFallback>JD</AvatarFallback>
+               {avatarSrc ? <AvatarImage src={avatarSrc} alt="Administrator" /> : null}
+               <AvatarFallback>AD</AvatarFallback>
             </Avatar>
         </DropdownMenuTrigger>
         <DropdownMenuContent

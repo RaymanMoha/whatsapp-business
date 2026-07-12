@@ -10,7 +10,7 @@
     "lint": "eslint",
     "bot:dev": "node --watch src/server.js",
     "bot:start": "node src/server.js",
-    "check": "node --check src/server.js && node --check src/cart.js && node --check src/cart-store.js && node --check src/settings-store.js && node --check src/knowledge.js && node --check src/catalog.js && node --check src/receipt.js && node --check src/receipt-store.js && npx tsc --noEmit",
+    "check": "node --check src/server.js && node --check src/auth-password.js && node --check src/auth-attempt-store.js && node --check src/webhook-auth.js && node --check src/cart.js && node --check src/cart-store.js && node --check src/settings-store.js && node --check src/knowledge.js && node --check src/knowledge-store.js && node --check src/catalog.js && node --check src/catalog-import.js && node --check src/payment-status.js && node --check src/message-queue.js && node --check src/order-store.js && node --check src/receipt.js && node --check src/receipt-store.js && npx tsc --noEmit",
     "test": "node --test src/*.test.js"
   },
   "dependencies": {
@@ -31,6 +31,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^16.4.7",
+    "exceljs": "^4.4.0",
     "express": "^4.21.2",
     "jose": "^6.1.0",
     "lucide-react": "^0.542.0",
@@ -60,6 +61,7 @@
     "node": ">=20"
   },
   "overrides": {
-    "postcss": "8.5.10"
+    "postcss": "8.5.10",
+    "uuid": "11.1.1"
   }
 }

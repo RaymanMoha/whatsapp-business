@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { initiateStkPush } from "@/src/mpesa";
 import { getMpesaStatus, listPayments } from "@/src/mpesa-store";
+import { syncOrderFromPayment } from "@/src/order-store";
 
 export async function GET() {
    return NextResponse.json({
@@ -18,6 +19,7 @@ export async function POST(request: NextRequest) {
          accountReference: body.accountReference,
          description: body.description,
       });
+      await syncOrderFromPayment(payment);
       return NextResponse.json({ payment });
    } catch (error) {
       return NextResponse.json(

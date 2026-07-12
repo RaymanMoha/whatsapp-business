@@ -5,7 +5,7 @@ const sections = [
   {
     title: "Overview",
     body:
-      "This Privacy Policy explains how Disruptor collects, uses, and safeguards your information when you use our Service.",
+      "This policy explains how the WhatsApp commerce service uses customer conversations, orders, catalog data, and administrator account information.",
   },
   {
     title: "Information We Collect",
@@ -20,7 +20,7 @@ const sections = [
   {
     title: "Cookies & Local Storage",
     body:
-      "For this demo, some preferences and content (e.g., chat history, avatar) are stored locally in your browser.",
+      "The dashboard stores appearance preferences and the administrator avatar locally in the browser. Commerce records are stored in the configured database.",
   },
   {
     title: "Data Sharing",
@@ -35,12 +35,12 @@ const sections = [
   {
     title: "Your Choices",
     body:
-      "You may update your profile information at any time. You can also clear local data such as chat history from your browser.",
+      "Administrators can clear browser preferences and manage retained commerce records according to the business retention policy.",
   },
   {
     title: "Contact",
     body:
-      "Questions? Contact privacy@example.com.",
+      "Privacy questions should be sent to the business contact configured by the administrator.",
   },
 ]
 
@@ -74,4 +74,3 @@ export default function PrivacyPage() {
     </main>
   )
 }
-

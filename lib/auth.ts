@@ -5,7 +5,11 @@ import { jwtVerify, type JWTPayload } from "jose"
 import type { Session } from "@/types"
 
 function getJwtSecret() {
-  return new TextEncoder().encode(process.env.AUTH_SECRET ?? "dev-secret")
+  const secret = process.env.AUTH_SECRET?.trim()
+  if ((!secret || secret === "dev-secret" || secret.length < 32) && process.env.NODE_ENV === "production") {
+    throw new Error("AUTH_SECRET must be configured securely")
+  }
+  return new TextEncoder().encode(secret || "local-development-secret-change-me")
 }
 
 export async function getSession(): Promise<Session | null> {

@@ -27,6 +27,19 @@ export function isRemoveFromCartIntent(text) {
   return (lower.includes('cart') && /\b(remove|delete)\b/.test(lower)) || lower.includes('take out of cart')
 }
 
+export function isProductSelectionIntent(text, matchedProducts) {
+  if (!Array.isArray(matchedProducts) || matchedProducts.length < 2) return false
+
+  const normalized = normalizeText(text)
+  const words = normalized.split(' ').filter(Boolean)
+  const hasConnector = /\b(and|plus|with)\b/.test(normalized) || String(text || '').includes(',')
+  const looksLikeQuestion = /\b(what|which|compare|difference|price|cost|have|available|recommend)\b/.test(
+    normalized,
+  )
+
+  return hasConnector && words.length <= 10 && !looksLikeQuestion
+}
+
 export function matchCartProducts(products, text) {
   const lower = normalizeText(text)
   return products.filter((product) => {

@@ -84,6 +84,7 @@ export function SignInForm({
             src={ParternBg.src}
             alt=""
             fill
+            priority
             className="absolute inset-0 w-full h-full object-cover pointer-events-none"
             style={{ zIndex: 0, objectFit: "cover", opacity: 0.8 }}
             sizes="(max-width: 1024px) 100vw, 448px"

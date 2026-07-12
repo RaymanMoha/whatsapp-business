@@ -36,7 +36,11 @@ services:
       WHATSAPP_API_HOSTNAME: waha
       WHATSAPP_HOOK_URL: http://bot:8080/webhook
       WHATSAPP_HOOK_EVENTS: message
-      WAHA_DASHBOARD_ENABLED: "true"
+      WHATSAPP_HOOK_HMAC_KEY: ${WHATSAPP_HOOK_HMAC_KEY}
+      WHATSAPP_HOOK_RETRIES_POLICY: exponential
+      WHATSAPP_HOOK_RETRIES_DELAY_SECONDS: 2
+      WHATSAPP_HOOK_RETRIES_ATTEMPTS: 6
+      WAHA_DASHBOARD_ENABLED: "false"
       WHATSAPP_SWAGGER_ENABLED: "false"
     volumes:
       - waha_sessions:/app/.sessions

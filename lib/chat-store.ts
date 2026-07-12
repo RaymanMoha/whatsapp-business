@@ -1,10 +1,9 @@
 "use client"
 
 import * as React from "react"
-import { sampleThreads } from "@/lib/chat-samples"
 import type { ChatThread, ChatMessage, ChatMessageMeta } from "@/types"
 
-const STORAGE_KEY = "disruptor.chat.threads.v1"
+const STORAGE_KEY = "whatsapp-commerce.chat.threads.v1"
 
 export async function getAssistantReply(userInput: string): Promise<string> {
   try {
@@ -27,20 +26,6 @@ export async function getAssistantReply(userInput: string): Promise<string> {
     // Fallback to a more helpful error message
     return "I'm experiencing connectivity issues right now. Please check your internet connection and try again. If the problem persists, the AI service might be temporarily unavailable."
   }
-}
-
-// Keep the old function as a fallback for backwards compatibility
-export function fakeAssistantReply(userInput: string): string {
-  const templates = [
-    "Here's a concise take: ",
-    "Short answer: ",
-    "In summary, ",
-    "A helpful starting point: ",
-  ]
-  const suffix =
-    "This is a simulated response. Hook up your AI backend to replace this placeholder with real insights."
-  const prefix = templates[userInput.length % templates.length]
-  return `${prefix}${userInput} — ${suffix}`
 }
 
 function readThreads(): ChatThread[] {
@@ -106,13 +91,7 @@ export function useThreads() {
 
   React.useEffect(() => {
     const fromStorage = readThreads()
-    if (fromStorage.length === 0) {
-      // Seed with samples on first use
-      writeThreads(sampleThreads)
-      setThreads(sampleThreads)
-    } else {
-      setThreads(fromStorage)
-    }
+    setThreads(fromStorage)
     setHydrated(true)
   }, [])
 

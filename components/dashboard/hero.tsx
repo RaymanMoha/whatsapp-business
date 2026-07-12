@@ -13,13 +13,7 @@ import {
 import { HERO_TITLE, HERO_SUBTITLE } from "@/constants";
 import Link from "next/link";
 
-const previewProducts = [
-   { name: "Organic Honey", price: "KES 249", emoji: "🍯" },
-   { name: "Green Tea", price: "KES 149", emoji: "🍵" },
-   { name: "Lavender Candle", price: "KES 249", emoji: "🕯️" },
-];
-
-export function Hero() {
+export function Hero({ catalogCount, connectionStatus }: { catalogCount: number; connectionStatus: string }) {
    return (
       <section className="space-y-8">
          <div className="relative overflow-hidden rounded-[32px] border border-black/5 bg-[#fcfcfa] px-6 py-7 shadow-[0_18px_60px_rgba(0,0,0,.06)] md:px-8 md:py-9">
@@ -105,9 +99,9 @@ export function Hero() {
                   </div>
                   <div className="mt-8 grid gap-4 md:grid-cols-3">
                      {[
-                        ["WhatsApp", "Connected"],
-                        ["AI engine", "Replies ready"],
-                        ["Catalog", "128 products"],
+                        ["Messaging", connectionStatus],
+                        ["Automation", "Approved replies"],
+                        ["Catalog", `${catalogCount} products`],
                      ].map(([label, value]) => (
                         <div key={label} className="rounded-xl border border-white/15 bg-white/10 p-4">
                            <p className="text-xs text-white/60">{label}</p>
@@ -119,8 +113,8 @@ export function Hero() {
 
                <div className="rounded-[28px] border border-white/15 bg-[#EFE7D8] p-3 shadow-2xl">
                   <div className="rounded-t-[20px] bg-white p-4">
-                     <strong className="block text-black">Neha Sharma</strong>
-                     <span className="text-sm font-semibold text-emerald-600">Online</span>
+                     <strong className="block text-black">Customer conversation</strong>
+                     <span className="text-sm font-semibold text-emerald-600">Commerce assistant</span>
                   </div>
                   <div className="space-y-3 p-4">
                      <div className="ml-auto max-w-[82%] rounded-2xl bg-[#DCF8C6] p-3 text-sm text-black">
@@ -129,16 +123,15 @@ export function Hero() {
                      <div className="max-w-[86%] rounded-2xl bg-white p-3 text-sm text-black shadow-sm">
                         Here are products currently available in our store.
                      </div>
-                     <div className="grid grid-cols-3 gap-2 rounded-2xl bg-white p-2">
-                        {previewProducts.map((product) => (
-                           <div key={product.name} className="rounded-xl border bg-white p-2 text-black">
-                              <div className="grid h-16 place-items-center rounded-lg bg-emerald-50 text-3xl">
-                                 {product.emoji}
-                              </div>
-                              <strong className="mt-2 block text-xs leading-tight">{product.name}</strong>
-                              <span className="text-xs text-zinc-500">{product.price}</span>
+                     <div className="rounded-2xl bg-white p-4 text-black shadow-sm">
+                        <div className="flex items-center justify-between gap-3">
+                           <div>
+                              <p className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-700">Live catalog</p>
+                              <p className="mt-1 text-sm font-semibold">{catalogCount} products available to the assistant</p>
                            </div>
-                        ))}
+                           <PackagePlus className="size-6 text-emerald-700" />
+                        </div>
+                        <p className="mt-3 text-xs leading-5 text-zinc-500">Pictures, prices, and stock are always pulled from the catalog—not hard-coded in this screen.</p>
                      </div>
                   </div>
                </div>

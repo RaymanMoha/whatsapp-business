@@ -26,11 +26,7 @@ function getStatusClass(status: string) {
    return "bg-amber-50 text-amber-700 ring-1 ring-amber-200";
 }
 
-export function LiveQuestions({
-   fallback,
-}: {
-   fallback: Array<{ id: string; customer: string; time: string; question: string; status: string }>;
-}) {
+export function LiveQuestions() {
    const [conversations, setConversations] = React.useState<ConversationSummary[]>([]);
    const [loaded, setLoaded] = React.useState(false);
 
@@ -95,21 +91,9 @@ export function LiveQuestions({
       );
    }
 
-   return (
-      <div className="space-y-3">
-         {loaded ? (
-            <div className="rounded-xl border border-dashed p-4 text-sm text-zinc-600">
-               No live WhatsApp messages recorded yet. Send a WhatsApp message to the connected number and this list will update automatically.
-            </div>
-         ) : null}
-         {fallback.map((question) => (
-            <div key={question.id} className="rounded-xl border p-4">
-               <strong className="block">{question.question}</strong>
-               <p className="mt-1 text-sm text-zinc-600">
-                  {question.customer} · {question.status} · {question.time}
-               </p>
-            </div>
-         ))}
+   return loaded ? (
+      <div className="rounded-xl border border-dashed p-6 text-sm leading-6 text-zinc-600">
+         No WhatsApp questions recorded yet. New customer messages will appear here automatically.
       </div>
-   );
+   ) : <p className="text-sm text-zinc-500">Loading customer questions…</p>;
 }

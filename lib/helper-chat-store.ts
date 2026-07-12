@@ -9,7 +9,7 @@ export type HelperMessage = {
   createdAt: string
 }
 
-const STORAGE_KEY = "disruptor.helper.chat.v1"
+const STORAGE_KEY = "whatsapp-commerce.helper.chat.v1"
 
 function readMessages(): HelperMessage[] {
   if (typeof window === "undefined") return []
@@ -76,26 +76,6 @@ export async function helperAssistantReply(userInput: string): Promise<string> {
     return data.message || 'I apologize, but I could not generate a response.'
   } catch (error) {
     console.error('Error getting AI response:', error)
-    // Fallback to basic helper responses
-    return helperAssistantReplyFallback(userInput)
+    return "The commerce assistant is temporarily unavailable. Check Bot Settings and try again."
   }
 }
-
-// Keep the old function as a fallback
-export function helperAssistantReplyFallback(userInput: string): string {
-  const help: Record<string, string> = {
-    navigation: "Use the left sidebar to explore Reon Capital projects like ENEVA, ZUBA, BEZZA, and ANSU. Find Getting Started guides, API documentation, and developer resources.",
-    chat: "For full conversation threads, click 'Developer Assistant' in the main menu to open the full chat with advanced AI capabilities.",
-    profile: "Update your name, email, avatar, and password under Account → Profile. Your settings are saved locally.",
-    auth: "Sign in or out via the user menu (top-right). Sessions are maintained for security.",
-    projects: "Explore our main projects: ENEVA (Energy Innovation), ZUBA (Full-stack Platform), BEZZA (Lightweight Platform), and ANSU (Enterprise Platform).",
-  }
-  const lower = userInput.toLowerCase()
-  if (lower.includes("profile")) return help.profile
-  if (lower.includes("sign") || lower.includes("auth") || lower.includes("login")) return help.auth
-  if (lower.includes("chat") || lower.includes("ask")) return help.chat
-  if (lower.includes("project") || lower.includes("eneva") || lower.includes("zuba") || lower.includes("bezza") || lower.includes("ansu")) return help.projects
-  if (lower.includes("nav") || lower.includes("menu") || lower.includes("where")) return help.navigation
-  return `Welcome to Reon Capital Developer Hub! ${help.navigation} ${help.chat}`
-}
-

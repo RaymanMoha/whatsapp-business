@@ -9,6 +9,10 @@ services:
       WAHA_API_KEY: ${WAHA_API_KEY:-change-this-local-api-key}
       WHATSAPP_HOOK_URL: http://host.docker.internal:8080/webhook
       WHATSAPP_HOOK_EVENTS: message
+      WHATSAPP_HOOK_HMAC_KEY: ${WHATSAPP_HOOK_HMAC_KEY}
+      WHATSAPP_HOOK_RETRIES_POLICY: exponential
+      WHATSAPP_HOOK_RETRIES_DELAY_SECONDS: 2
+      WHATSAPP_HOOK_RETRIES_ATTEMPTS: 6
       WAHA_DASHBOARD_ENABLED: "true"
       WAHA_DASHBOARD_USERNAME: ${WAHA_DASHBOARD_USERNAME:-waha}
       WAHA_DASHBOARD_PASSWORD: ${WAHA_DASHBOARD_PASSWORD:-change-this-dashboard-password}

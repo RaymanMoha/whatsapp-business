@@ -55,34 +55,3 @@ export const products = [
     emoji: '🕯️',
   },
 ]
-
-export const recentQuestions = [
-  {
-    id: 'q-1',
-    customer: 'Neha Sharma',
-    time: '11:32 AM',
-    question: 'What is available in your store?',
-    status: 'Replied by AI',
-  },
-  {
-    id: 'q-2',
-    customer: 'Rohan Verma',
-    time: '10:58 AM',
-    question: 'Do you deliver to JP Nagar?',
-    status: 'Replied by AI',
-  },
-  {
-    id: 'q-3',
-    customer: 'Priya Nair',
-    time: '10:21 AM',
-    question: 'Is the Organic Honey pure?',
-    status: 'Replied by AI',
-  },
-  {
-    id: 'q-4',
-    customer: 'Amit Patel',
-    time: 'Yesterday',
-    question: 'Can I get a bulk discount on 10 pcs?',
-    status: 'Missed',
-  },
-]

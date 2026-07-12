@@ -213,7 +213,7 @@ export function Sidebar({
                                  const key = `${parent}-${idx}-${it.label}`
                                  if (it.items && it.items.length) {
                                     return (
-                                       <Accordion type="single" collapsible key={key}>
+                                       <Accordion type="single" collapsible defaultValue={key} key={key}>
                                           <AccordionItem value={key}>
                                              <AccordionTrigger className="px-3 py-2 hover:text-emerald-500 text-[13px] [&>svg]:hidden [&[data-state=open]_.plus-icon]:hidden [&[data-state=open]_.minus-icon]:block">
                                                 <div className="flex w-full items-center justify-between">
@@ -248,7 +248,7 @@ export function Sidebar({
                      }
 
                      return (
-                        <Accordion type="single" collapsible key={group.id}>
+                        <Accordion type="single" collapsible defaultValue={group.id} key={group.id}>
                            <AccordionItem value={group.id}>
                               <AccordionTrigger className="px-3 py-3 hover:text-emerald-500 text-[15px] [&>svg]:hidden [&[data-state=open]_.plus-icon]:hidden [&[data-state=open]_.minus-icon]:block">
                                  <div className="flex w-full items-center justify-between">
