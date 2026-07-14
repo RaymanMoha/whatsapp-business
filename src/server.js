@@ -6,7 +6,6 @@ import {
   extractCartQuantity,
   formatCartSummary,
   getCartItemCount,
-  getCartTotal,
   isAddToCartIntent,
   isClearCartIntent,
   isProductSelectionIntent,
@@ -27,11 +26,16 @@ import { getOrderById, syncOrderFromPayment } from './order-store.js'
 import { isPaymentConfirmationClaim, paymentClaimReply } from './payment-status.js'
 import { getMongoStatus } from './mongodb.js'
 import { findProductsForMessage, readProducts } from './product-store.js'
+import { sanitizeWhatsAppReply, selectWhatsAppProductImages } from './whatsapp-product-ux.js'
 import { getRuntimeSettings } from './settings-store.js'
 import { sendWahaFile, sendWahaImage, sendWahaText } from './waha.js'
 import { readMessageTemplates } from './template-store.js'
 import { verifyWebhookSignature } from './webhook-auth.js'
 import { getReceiptByPaymentId, markReceiptShared } from './receipt-store.js'
+import { calculateCartPricing, promotionCustomerDescription } from './promotion-engine.js'
+import { readActivePromotions } from './promotion-store.js'
+import { writeRuntimeHeartbeat } from './runtime-heartbeat.js'
+import { getWahaConfig } from './waha.js'
 
 const app = express()
 
@@ -63,6 +67,50 @@ const pendingProducts = new Map()
 const pendingPayments = new Map()
 const workerId = `bot-${process.pid}`
 let workerBusy = false
+let heartbeatBusy = false
+
+async function publishRuntimeHeartbeat() {
+  if (heartbeatBusy) return
+  heartbeatBusy = true
+  try {
+    const [runtime, waha] = await Promise.all([getRuntimeSettings({ fresh: true }), getWahaConfig()])
+    let session = null
+    let messagingError = null
+    try {
+      const response = await fetch(`${waha.baseUrl}/api/sessions?all=true`, {
+        headers: { 'X-Api-Key': waha.apiKey },
+        signal: AbortSignal.timeout(5000),
+      })
+      if (!response.ok) throw new Error(`WhatsApp status request failed (${response.status})`)
+      const sessions = await response.json()
+      session = Array.isArray(sessions)
+        ? sessions.find((item) => item.name === waha.session) || sessions[0] || null
+        : null
+    } catch (error) {
+      messagingError = String(error?.message || error || 'WhatsApp status unavailable').slice(0, 250)
+    }
+
+    await writeRuntimeHeartbeat({
+      bot: {
+        online: true,
+        configured: Boolean(runtime.groqApiKey),
+        businessName: runtime.businessName,
+      },
+      messaging: {
+        online: session?.status === 'WORKING',
+        session: session?.name || waha.session,
+        status: session?.status || 'NOT_CONNECTED',
+        phone: session?.me?.id || null,
+        pushName: session?.me?.pushName || null,
+        error: messagingError,
+      },
+    })
+  } catch (error) {
+    console.error('Failed to publish commerce heartbeat:', error)
+  } finally {
+    heartbeatBusy = false
+  }
+}
 
 app.get('/health', async (_request, response) => {
   const [mongo, runtime, queue] = await Promise.all([getMongoStatus(), getRuntimeSettings({ fresh: true }), getMessageQueueStatus()])
@@ -113,11 +161,12 @@ async function processIncomingMessage(incoming) {
     text: incoming.text,
     status: 'received',
   })
-  const products = await readProducts()
-  const cartReply = await buildCartReply(incoming, products)
-  const paymentReply = cartReply ? null : await buildPaymentReply(incoming, products)
-  const commerceReply = cartReply || paymentReply
-  const reply = commerceReply || await buildReply(incoming, products)
+  const [products, promotions] = await Promise.all([readProducts(), readActivePromotions()])
+  const cartReply = await buildCartReply(incoming, products, promotions)
+  const paymentReply = cartReply ? null : await buildPaymentReply(incoming, products, promotions)
+  const promotionReply = cartReply || paymentReply ? null : buildPromotionReply(incoming.text, promotions)
+  const commerceReply = cartReply || paymentReply || promotionReply
+  const reply = sanitizeWhatsAppReply(commerceReply || await buildReply(incoming, products, promotions))
   await sendWhatsAppText(incoming.chatId, reply, incoming.session)
   if (!commerceReply) {
     await sendRelevantProductImages(incoming, products)
@@ -178,7 +227,8 @@ async function processPaymentDelivery(job) {
     const items = Array.isArray(payment.lineItems) && payment.lineItems.length
       ? payment.lineItems.map((item) => `${item.quantity || 1} x ${item.name || 'item'}`)
       : [payment.productName || payment.accountReference || 'your order']
-    const message = ['Payment received for your order.', ...items, `Amount: KES ${payment.amount}.`, `Order: ${order.orderNumber}.`, `Receipt: ${payment.mpesaReceiptNumber}.`, 'Your order is confirmed and waiting for preparation.'].join('\n')
+    const savings = Number(payment.discount || 0) > 0 ? [`Promotion: ${payment.promotion?.name || 'Offer'} (-KES ${payment.discount}).`] : []
+    const message = ['Payment received for your order.', ...items, ...savings, `Amount: KES ${payment.amount}.`, `Order: ${order.orderNumber}.`, `Receipt: ${payment.mpesaReceiptNumber}.`, 'Your order is confirmed and waiting for preparation.'].join('\n')
     await sendWahaText(targetChatId, message)
     await updatePaymentById(payment.id, { confirmationSentAt: new Date().toISOString() })
     await appendConversationEvent({ id: `${payment.checkoutRequestId}-payment-confirmed`, chatId: targetChatId, customerName: payment.customerName || targetChatId, direction: 'assistant', text: message, status: 'sent' })
@@ -203,7 +253,7 @@ app.post('/test/reply', async (request, response) => {
     return
   }
 
-  const products = await readProducts()
+  const [products, promotions] = await Promise.all([readProducts(), readActivePromotions()])
   const incoming = {
     id: `test-${Date.now()}`,
     chatId,
@@ -211,22 +261,25 @@ app.post('/test/reply', async (request, response) => {
     text: message,
     fromMe: false,
   }
-  const cartReply = await buildCartReply(incoming, products)
-  const paymentReply = cartReply ? null : await buildPaymentReply(incoming, products)
-  const commerceReply = cartReply || paymentReply
-  const reply = commerceReply || await buildReply(incoming, products)
+  const cartReply = await buildCartReply(incoming, products, promotions)
+  const paymentReply = cartReply ? null : await buildPaymentReply(incoming, products, promotions)
+  const promotionReply = cartReply || paymentReply ? null : buildPromotionReply(incoming.text, promotions)
+  const commerceReply = cartReply || paymentReply || promotionReply
+  const reply = sanitizeWhatsAppReply(commerceReply || await buildReply(incoming, products, promotions))
   if (!commerceReply) rememberPendingProduct(chatId, message, products)
 
   response.json({
     reply,
-    productImages: findProductsForMessage(products, message).filter((product) => product.image?.data).length,
+    productImages: selectWhatsAppProductImages(products, message).length,
   })
 })
 
 app.listen(config.port, () => {
   console.log(`${config.botName} is listening on http://localhost:${config.port}`)
   setInterval(runMessageWorker, 1000).unref()
+  setInterval(publishRuntimeHeartbeat, 15_000).unref()
   runMessageWorker().catch((error) => console.error('Initial message worker failed:', error))
+  publishRuntimeHeartbeat().catch((error) => console.error('Initial heartbeat failed:', error))
 })
 
 function extractIncomingMessage(body) {
@@ -258,7 +311,7 @@ function extractIncomingMessage(body) {
   }
 }
 
-async function buildCartReply(incoming, products) {
+async function buildCartReply(incoming, products, promotions) {
   const chatId = incoming.chatId
   const currentCart = await getCart(chatId)
 
@@ -272,13 +325,13 @@ async function buildCartReply(incoming, products) {
     const matched = matchCartProducts(products, incoming.text)
     if (!currentCart.length) return 'Your cart is empty.'
     if (!matched.length) {
-      return `${formatCartSummary(currentCart)}\n\nTell me which product to remove, for example: "remove Green Tea from cart".`
+      return `${formatCartSummary(currentCart, 'Your cart', calculateCartPricing(currentCart, promotions))}\n\nTell me which product to remove, for example: "remove Green Tea from cart".`
     }
 
     const nextCart = removeCartItems(currentCart, matched.map((product) => product.id))
     await saveCart(chatId, nextCart)
     return nextCart.length
-      ? `Removed ${matched.map((product) => product.name).join(', ')}.\n\n${formatCartSummary(nextCart)}\n\nReply "pay cart" when ready.`
+      ? `Removed ${matched.map((product) => product.name).join(', ')}.\n\n${formatCartSummary(nextCart, 'Your cart', calculateCartPricing(nextCart, promotions))}\n\nReply "pay cart" when ready.`
       : 'Removed. Your cart is now empty.'
   }
 
@@ -313,21 +366,21 @@ async function buildCartReply(incoming, products) {
       messages.push(`Not added: ${unavailable.map((product) => `${product.name} is sold out`).join(', ')}.`)
     }
     if (nextCart.length) {
-      messages.push(formatCartSummary(nextCart), 'Reply "pay cart" when ready, or keep adding products.')
+      messages.push(formatCartSummary(nextCart, 'Your cart', calculateCartPricing(nextCart, promotions)), 'Reply "pay cart" when ready, or keep adding products.')
     }
     return messages.join('\n\n')
   }
 
   if (isViewCartIntent(incoming.text)) {
     return currentCart.length
-      ? `${formatCartSummary(currentCart)}\n\nReply "pay cart" to receive one M-Pesa prompt for the total.`
+      ? `${formatCartSummary(currentCart, 'Your cart', calculateCartPricing(currentCart, promotions))}\n\nReply "pay cart" to receive one M-Pesa prompt for the total.`
       : 'Your cart is empty. Say "add Organic Honey to cart" to get started.'
   }
 
   return null
 }
 
-async function buildPaymentReply(incoming, products) {
+async function buildPaymentReply(incoming, products, promotions) {
   if (isPaymentConfirmationClaim(incoming.text)) {
     const [latestPayment] = await listRecentPaymentsForChat(incoming.chatId).catch(() => [])
     if (
@@ -379,8 +432,9 @@ async function buildPaymentReply(incoming, products) {
   })
 
   const phone = typedPhone || extractPhoneFromChatId(incoming.chatId)
+  const pricing = calculateCartPricing(items, promotions)
   if (!phone) {
-    return `${formatCartSummary(items)}\n\nSend the M-Pesa phone number, for example: "2547XXXXXXX".`
+    return `${formatCartSummary(items, 'Your cart', pricing)}\n\nSend the M-Pesa phone number, for example: "2547XXXXXXX".`
   }
 
   const mpesa = await getMpesaStatus()
@@ -389,7 +443,10 @@ async function buildPaymentReply(incoming, products) {
   }
 
   try {
-    const amount = getCartTotal(items)
+    const amount = pricing.total
+    if (amount < 1) {
+      return 'This promotion makes the order free, so an M-Pesa prompt cannot be sent. Please contact the business team to complete the order.'
+    }
     const itemCount = getCartItemCount(items)
     const productName = items.length === 1 ? items[0].name : `${itemCount}-item cart`
     const payment = await initiateStkPush({
@@ -403,18 +460,39 @@ async function buildPaymentReply(incoming, products) {
       productName,
       lineItems: items,
       itemCount,
+      subtotal: pricing.subtotal,
+      discount: pricing.discount,
+      promotion: pricing.promotion,
       source: 'whatsapp',
     })
     await syncOrderFromPayment(payment)
     pendingProducts.delete(incoming.chatId)
     pendingPayments.delete(incoming.chatId)
     return [
-      formatCartSummary(items, 'Payment request'),
+      formatCartSummary(items, 'Payment request', pricing),
       payment.customerMessage || 'Check your phone and enter your M-Pesa PIN to complete payment.',
     ].join('\n')
   } catch (error) {
     return `I could not start the M-Pesa payment for this cart: ${error.message}`
   }
+}
+
+function buildPromotionReply(text, promotions) {
+  if (!/\b(promotion|promotions|promo|promos|offer|offers|discount|discounts|deal|deals|sale)\b/i.test(String(text || ''))) {
+    return null
+  }
+  if (!promotions.length) {
+    return 'There are no active promotions right now. I can still show you the available products.'
+  }
+
+  const lines = promotions.map((promotion, index) => {
+    const minimum = promotion.minimumSpend ? ` Minimum order: KES ${promotion.minimumSpend}.` : ''
+    const end = promotion.endsAt
+      ? ` Ends ${new Date(promotion.endsAt).toLocaleString('en-KE', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Africa/Nairobi' })}.`
+      : ''
+    return `${index + 1}. ${promotion.name} — ${promotionCustomerDescription(promotion)}. ${promotion.description}${minimum}${end}`
+  })
+  return ['Here are the active offers:', ...lines, 'Add eligible products to your cart and the best offer will be applied automatically.'].join('\n')
 }
 
 function extractText(payload) {
@@ -484,7 +562,7 @@ function normalizePaymentPhone(phone) {
   return ''
 }
 
-async function buildReply(incoming, products) {
+async function buildReply(incoming, products, promotions) {
   const runtime = await getRuntimeSettings()
   if (!runtime.groqApiKey) {
     return 'The AI assistant is not configured yet. Add an AI service key in Bot Settings.'
@@ -507,7 +585,7 @@ async function buildReply(incoming, products) {
       temperature: 0.2,
       max_tokens: 350,
       messages: [
-        { role: 'system', content: buildSystemPrompt(products, paymentContext, runtime, approvedKnowledge, replyTemplates) },
+        { role: 'system', content: buildSystemPrompt(products, promotions, paymentContext, runtime, approvedKnowledge, replyTemplates) },
         ...history,
         { role: 'user', content: incoming.text.slice(0, 1200) },
       ],
@@ -542,19 +620,22 @@ async function buildPaymentContext(chatId) {
     .join('\n')
 }
 
-function buildSystemPrompt(products, paymentContext, runtime, approvedKnowledge, replyTemplates) {
+function buildSystemPrompt(products, promotions, paymentContext, runtime, approvedKnowledge, replyTemplates) {
   const knowledge = approvedKnowledge
     .map((entry, index) => `${index + 1}. ${entry.topic}: ${entry.content}`)
     .join('\n')
   const catalog = products
     .map((product, index) => {
       const status = product.available ? `available, ${product.stock} in stock` : 'not available'
-      const imageStatus = product.image?.data ? 'Product picture available and can be sent after the text reply.' : 'No product picture uploaded.'
+      const imageStatus = product.image?.data ? 'Product picture stored for direct WhatsApp media delivery.' : 'No product picture uploaded.'
       return `${index + 1}. ${product.name}: ${product.subtitle}. Category: ${product.category}. Price: KES ${product.price}. Status: ${status}. ${imageStatus}`
     })
     .join('\n')
   const templates = replyTemplates
     .map((template, index) => `${index + 1}. ${template.name} (${template.category}): ${template.body}`)
+    .join('\n')
+  const promotionInformation = promotions
+    .map((promotion, index) => `${index + 1}. ${promotion.name}: ${promotionCustomerDescription(promotion)}. ${promotion.description}${promotion.minimumSpend ? ` Minimum cart spend: KES ${promotion.minimumSpend}.` : ''}`)
     .join('\n')
 
   return `You are ${runtime.botName}, a WhatsApp FAQ assistant for ${runtime.businessName}.
@@ -571,6 +652,9 @@ ${knowledge}
 Approved product catalog:
 ${catalog}
 
+Active promotions:
+${promotionInformation || 'No active promotions.'}
+
 Approved reply templates:
 ${templates || 'No saved templates.'}
 
@@ -580,6 +664,10 @@ ${paymentContext}
 Rules:
 - Answer only from the approved information above.
 - For product questions, answer only from the approved product catalog above.
+- Never output product image URLs, placeholder links, example links, markdown image links, or data URLs. Product pictures are sent separately as real WhatsApp media.
+- When the customer asks generally what is available, give a concise numbered product list and end with: "Reply with a product name to see its photo."
+- Do not claim that multiple product photos or image links will follow. At most one relevant product image card is sent after each reply.
+- Mention only promotions listed under Active promotions. Pricing rules apply the best eligible offer automatically at checkout.
 - When an approved reply template fits the question, follow its wording and replace its variables with approved information.
 - Keep replies short enough for WhatsApp.
 - If the user asks for private payment data, OTPs, PINs, passwords, or sensitive information, refuse and give a safe next step.
@@ -590,9 +678,7 @@ Rules:
 }
 
 async function sendRelevantProductImages(incoming, products) {
-  const productsToSend = findProductsForMessage(products, incoming.text)
-    .filter((product) => product.image?.data && product.image?.mimetype)
-    .slice(0, 3)
+  const productsToSend = selectWhatsAppProductImages(products, incoming.text)
 
   if (productsToSend.length === 0) {
     return

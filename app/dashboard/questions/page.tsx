@@ -1,6 +1,5 @@
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
 import Heading from "@/components/heading";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LiveQuestions } from "@/components/commerce/live-questions";
 
 export default function QuestionsPage() {
@@ -11,14 +10,7 @@ export default function QuestionsPage() {
                title="Customer Questions"
                description="See what customers ask and where the AI needs better approved business information."
             />
-            <Card className="text-black dark:text-black">
-               <CardHeader>
-                  <CardTitle>Live WhatsApp question queue</CardTitle>
-               </CardHeader>
-               <CardContent className="space-y-3">
-                  <LiveQuestions />
-               </CardContent>
-            </Card>
+            <LiveQuestions />
          </div>
       </DashboardLayout>
    );

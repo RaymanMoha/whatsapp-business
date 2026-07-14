@@ -32,6 +32,30 @@ function serializeProduct(product) {
   return cleanProduct
 }
 
+function productIdFromName(name) {
+  return String(name || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
+function validateProductInput(input) {
+  const name = String(input?.name || '').trim()
+  const category = String(input?.category || '').trim()
+  const subtitle = String(input?.subtitle || '').trim()
+  const emoji = String(input?.emoji || '📦').trim() || '📦'
+  const price = Number(input?.price)
+  const stock = Number(input?.stock)
+
+  if (!name) throw new Error('Product name is required')
+  if (!category) throw new Error('Category is required')
+  if (!Number.isFinite(price) || price < 0) throw new Error('Price must be zero or more')
+  if (!Number.isInteger(stock) || stock < 0) throw new Error('Stock must be a whole number of zero or more')
+
+  return { name, category, subtitle, emoji, price, stock, available: Boolean(input?.available) && stock > 0 }
+}
+
 export async function readProducts() {
   if (isMongoConfigured()) {
     const db = await getMongoDb()
@@ -91,6 +115,83 @@ export async function updateProductImage(productId, image) {
   )
   await writeFile(productsFile, JSON.stringify({ products: nextProducts }, null, 2))
   return serializeProduct(nextProducts.find((product) => product.id === productId))
+}
+
+export async function createProduct(input) {
+  const product = validateProductInput(input)
+  const id = productIdFromName(product.name)
+  if (!id) throw new Error('Product name must include letters or numbers')
+
+  const existingProducts = await readProducts()
+  if (existingProducts.some((item) => item.id === id)) {
+    throw new Error('A product with this name already exists')
+  }
+
+  const now = new Date().toISOString()
+  const nextProduct = { id, ...product, image: null, createdAt: now, updatedAt: now }
+
+  if (isMongoConfigured()) {
+    const db = await getMongoDb()
+    await db.collection('products').createIndex({ id: 1 }, { unique: true })
+    await db.collection('products').insertOne(nextProduct)
+    return serializeProduct(nextProduct)
+  }
+
+  await ensureStore()
+  const raw = await readFile(productsFile, 'utf8')
+  const parsed = JSON.parse(raw)
+  const products = Array.isArray(parsed.products) ? parsed.products : []
+  products.push(nextProduct)
+  await writeFile(productsFile, JSON.stringify({ products }, null, 2))
+  return serializeProduct(nextProduct)
+}
+
+export async function updateProduct(productId, input) {
+  const id = String(productId || '').trim()
+  if (!id) throw new Error('Product id is required')
+
+  const existingProducts = await readProducts()
+  const existing = existingProducts.find((product) => product.id === id)
+  if (!existing) throw new Error('Product not found')
+
+  const product = validateProductInput(input)
+  const updatedAt = new Date().toISOString()
+  const updates = { ...product, updatedAt }
+
+  if (isMongoConfigured()) {
+    const db = await getMongoDb()
+    await db.collection('products').updateOne({ id }, { $set: updates })
+    const updated = await db.collection('products').findOne({ id })
+    return serializeProduct(updated)
+  }
+
+  await ensureStore()
+  const raw = await readFile(productsFile, 'utf8')
+  const parsed = JSON.parse(raw)
+  const products = Array.isArray(parsed.products) ? parsed.products : []
+  const nextProducts = products.map((item) => (item.id === id ? { ...item, ...updates } : item))
+  await writeFile(productsFile, JSON.stringify({ products: nextProducts }, null, 2))
+  return serializeProduct(nextProducts.find((item) => item.id === id))
+}
+
+export async function deleteProduct(productId) {
+  const id = String(productId || '').trim()
+  if (!id) throw new Error('Product id is required')
+
+  if (isMongoConfigured()) {
+    const db = await getMongoDb()
+    const result = await db.collection('products').deleteOne({ id })
+    if (result.deletedCount === 0) throw new Error('Product not found')
+    return
+  }
+
+  await ensureStore()
+  const raw = await readFile(productsFile, 'utf8')
+  const parsed = JSON.parse(raw)
+  const products = Array.isArray(parsed.products) ? parsed.products : []
+  const nextProducts = products.filter((product) => product.id !== id)
+  if (nextProducts.length === products.length) throw new Error('Product not found')
+  await writeFile(productsFile, JSON.stringify({ products: nextProducts }, null, 2))
 }
 
 export async function importProducts(rows) {

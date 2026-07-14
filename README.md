@@ -110,6 +110,21 @@ Replace the demo restaurant information with the client's approved information:
 
 The bot is instructed not to invent answers outside this file.
 
+## Google Sheets and Forms
+
+Open **Dashboard → Google Tools** to connect an operations spreadsheet without turning Sheets into the application database. MongoDB remains the source of truth.
+
+1. Create a blank Google Sheet and open **Extensions → Apps Script**.
+2. Copy the provided `/google-commerce-sync.gs` template into the Apps Script editor.
+3. In `configure()`, set the public app URL and a unique shared secret of at least 32 characters, then run the function once.
+4. Deploy the script as a web app that executes as the Sheet owner, and copy its `/exec` URL.
+5. Paste the Sheet URL, web app URL, and the same secret into **Google Tools**, then save and test the connection.
+6. Use **Sync now** to create or refresh the Catalog, Orders and Payments tabs.
+
+For product entry with Google Forms, create fields named `ID`, `Name`, `Subtitle`, `Category`, `Price`, `Stock`, `Available`, and `Emoji`. Link the Form to the operations Sheet, then use **Commerce Hub → Install product form trigger** from the Sheet menu. Submitted products are validated and duplicate events are ignored before the catalog changes.
+
+The public integration webhook is authenticated with `X-Commerce-Integration-Secret`. Never put the shared secret in Sheet cells.
+
 ## Production notes
 
 - Store dashboard data in MongoDB Atlas using `MONGODB_URI`.

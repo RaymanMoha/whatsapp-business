@@ -1,0 +1,17 @@
+{
+  "demo": "HerWardrobeKE women fashion catalog",
+  "usage": "Demo and testing only. Replace with the merchant's own catalog photography before production use.",
+  "license": "Unsplash License",
+  "products": [
+    { "id": "sage-satin-midi-dress", "photographer": "Jasmin Chew", "source": "https://unsplash.com/photos/a-woman-in-a-green-dress-standing-in-a-forest-jbYKNuVabek" },
+    { "id": "onyx-ribbed-co-ord-set", "photographer": "Reza Delkhosh", "source": "https://unsplash.com/photos/a-woman-sitting-on-top-of-a-stool-coSnkCK5Nis" },
+    { "id": "mocha-wide-leg-trousers", "photographer": "alexanderafan", "source": "https://unsplash.com/photos/woman-poses-fashionably-in-a-modern-urban-setting-AGS5n2WE9zQ" },
+    { "id": "cloud-oversized-linen-shirt", "photographer": "Look Studio", "source": "https://unsplash.com/photos/a-woman-wearing-sunglasses-and-a-white-shirt-Qx4SCBlsCns" },
+    { "id": "sand-structured-blazer", "photographer": "Roman Holoschchuk", "source": "https://unsplash.com/photos/woman-in-black-tank-top-and-beige-blazer-standing-on-dried-leaves-ZnHpOhHnkDY" },
+    { "id": "noir-ruched-mini-dress", "photographer": "Marlon Alves", "source": "https://unsplash.com/photos/a-woman-in-a-black-dress-posing-for-a-picture-TNNgXim5raE" },
+    { "id": "ivory-pleated-maxi-skirt", "photographer": "Zulfugar Karimov", "source": "https://unsplash.com/photos/woman-in-black-top-and-white-skirt-by-water-DOjc05Z9zeA" },
+    { "id": "classic-straight-leg-jeans", "photographer": "KAi'S PHOTOGRAPHY", "source": "https://unsplash.com/photos/woman-in-white-tank-top-and-blue-denim-jeans-sitting-on-white-chair-2s3GhhJz2uY" },
+    { "id": "slate-mini-shoulder-bag", "photographer": "mostafa mahmoudi", "source": "https://unsplash.com/photos/black-leather-handbag-on-white-table-J4DnKxz_3sA" },
+    { "id": "pearl-block-heel-sandals", "photographer": "Eugenia Pan'kiv", "source": "https://unsplash.com/photos/woman-in-white-peep-toe-heeled-sandals-62GjTkG9_dM" }
+  ]
+}

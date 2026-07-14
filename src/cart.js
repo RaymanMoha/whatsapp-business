@@ -70,6 +70,7 @@ export function addCartItems(currentItems, products, quantity = 1) {
     const item = {
       productId: product.id,
       name: product.name,
+      category: product.category || '',
       unitPrice: Number(product.price || 0),
       quantity: nextQuantity,
       lineTotal: Number(product.price || 0) * nextQuantity,
@@ -107,6 +108,7 @@ export function revalidateCartItems(currentItems, products) {
     items.push({
       productId: product.id,
       name: product.name,
+      category: product.category || '',
       unitPrice: Number(product.price || 0),
       quantity: item.quantity,
       lineTotal: Number(product.price || 0) * item.quantity,
@@ -124,15 +126,24 @@ export function getCartItemCount(items) {
   return items.reduce((total, item) => total + Number(item.quantity || 0), 0)
 }
 
-export function formatCartSummary(items, heading = 'Your cart') {
+export function formatCartSummary(items, heading = 'Your cart', pricing = null) {
   if (!items.length) return 'Your cart is empty.'
 
   const lines = items.map(
     (item) => `${item.quantity} x ${item.name} — KES ${item.lineTotal}`,
   )
+  const subtotal = Number(pricing?.subtotal ?? getCartTotal(items))
+  const discount = Number(pricing?.discount || 0)
+  const total = Number(pricing?.total ?? subtotal)
   return [
     `${heading}:`,
     ...lines,
-    `Total: KES ${getCartTotal(items)}`,
+    ...(discount > 0
+      ? [
+          `Subtotal: KES ${subtotal}`,
+          `${pricing?.promotion?.name || 'Promotion'}: -KES ${discount}`,
+        ]
+      : []),
+    `Total: KES ${total}`,
   ].join('\n')
 }

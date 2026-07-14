@@ -25,10 +25,10 @@ import {
    MessageSquareText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import Logo from "@/public/whatsapp-commerce-logo.svg";
 import ParternBg from "@/public/pattern-bg.png";
 import type { NavItem } from "@/types";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { BrandLogo } from "@/components/brand-logo";
 
 export type SidebarProps = {
    onClose?: () => void;
@@ -95,6 +95,7 @@ export function Sidebar({
             src={ParternBg.src}
             alt=""
             fill
+            priority
             className="absolute inset-0 w-full h-full object-cover pointer-events-none"
             style={{ zIndex: 0, objectFit: "cover", opacity: 0.8 }}
             sizes="18rem"
@@ -105,13 +106,7 @@ export function Sidebar({
             } py-4`}>
             {collapsed ? null : (
                <Link href="/dashboard" className="flex items-center gap-2">
-                  <Image
-                     src={Logo.src}
-                     alt="WhatsApp Commerce Hub logo"
-                     width={180}
-                     height={49}
-                     className="object-contain"
-                  />
+                  <BrandLogo variant="color" className="h-[66px] w-auto" sizes="120px" priority />
                </Link>
             )}
             <div className="flex items-center">

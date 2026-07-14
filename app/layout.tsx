@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Geist_Mono } from "next/font/google";
+import { Bricolage_Grotesque, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ToastProviderInternal } from "@/components/ui/use-toast";
 import { ThemeScript } from "@/components/theme-script";
 
-const spaceGrotesk = Space_Grotesk({
-   variable: "--font-geist-sans",
-   weight: "variable",
+const bricolageGrotesque = Bricolage_Grotesque({
+   variable: "--font-bricolage-grotesque",
    display: "swap",
    subsets: ["latin"],
 });
@@ -18,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-   title: "WhatsApp Commerce Hub",
+   title: "AppBase — WhatsApp commerce for growing businesses",
    description: "Dashboard for managing WhatsApp products, orders, customer questions, and AI bot settings.",
 };
 
@@ -30,7 +29,7 @@ export default function RootLayout({
    return (
       <html lang="en">
          <body
-            className={`${spaceGrotesk.variable} ${geistMono.variable} antialiased font-sans`}>
+            className={`${bricolageGrotesque.className} ${bricolageGrotesque.variable} ${geistMono.variable} antialiased`}>
             <ThemeScript />
             <ToastProviderInternal>
                {children}

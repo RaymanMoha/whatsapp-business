@@ -10,12 +10,13 @@ import { useHelperChat, helperAssistantReply, type HelperMessage } from "@/lib/h
 import ParternBg from "@/public/pattern-bg.png"
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import Image from "next/image"
+import { MessageContent } from "@/components/chat/message-content"
 
 function Bubble({ message }: { message: HelperMessage }) {
   const isUser = message.role === "user"
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-      <div className={`${isUser ? "bg-[#D7DEDD] animate-chat-in-right" : "bg-card animate-chat-in-left"} max-w-[75%] rounded-sm px-4 py-3 text-sm`}>{message.content}</div>
+      <div className={`${isUser ? "bg-[#D7DEDD] animate-chat-in-right" : "bg-card animate-chat-in-left"} max-w-[86%] rounded-xl px-4 py-3 text-sm shadow-sm`}><MessageContent content={message.content} /></div>
     </div>
   )
 }
@@ -87,7 +88,7 @@ export function HelperChat() {
     
     // Add thinking message
     const thinkingId = crypto.randomUUID()
-    append("assistant", "🤔 Thinking...")
+    append("assistant", "Checking your commerce data…")
     
     try {
       // Get real AI response
@@ -97,7 +98,7 @@ export function HelperChat() {
       setMessages((prev) => {
         const newMessages = [...prev]
         const thinkingIndex = newMessages.findIndex((msg, idx) => 
-          idx === newMessages.length - 1 && msg.content === "🤔 Thinking..."
+          idx === newMessages.length - 1 && msg.content === "Checking your commerce data…"
         )
         if (thinkingIndex !== -1) {
           newMessages[thinkingIndex] = {
@@ -115,7 +116,7 @@ export function HelperChat() {
       setMessages((prev) => {
         const newMessages = [...prev]
         const thinkingIndex = newMessages.findIndex((msg, idx) => 
-          idx === newMessages.length - 1 && msg.content === "🤔 Thinking..."
+          idx === newMessages.length - 1 && msg.content === "Checking your commerce data…"
         )
         if (thinkingIndex !== -1) {
           newMessages[thinkingIndex] = {

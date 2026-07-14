@@ -1,11 +1,5 @@
-.env
-.env.*
-.waha-sessions
-data
-tmp
-deploy
-Dockerfile
-docker-compose*.yml
-Caddyfile
-README*.png
+output/
+.playwright-cli/
+.waha-sessions/
+qr-default*.png
 npm-debug.log*

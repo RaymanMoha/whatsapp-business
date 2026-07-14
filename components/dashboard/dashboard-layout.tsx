@@ -40,10 +40,10 @@ export function DashboardLayout({
                : "grid min-h-screen md:grid-cols-[18rem_1fr] bg-primary relative"
          }>
          <Image
-            src={ParternBg.src}
-            alt=""
-            fill
-            className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+               src={ParternBg.src}
+               alt=""
+               fill
+               className="absolute inset-0 w-full h-full object-cover pointer-events-none"
             style={{ zIndex: 0, objectFit: "cover", opacity: 0.8 }}
             sizes="100vw"
          />
@@ -51,8 +51,8 @@ export function DashboardLayout({
          {/* Static sidebar on md+ */}
          <div className="hidden md:block">{sidebarNode}</div>
 
-         <div className="p-2">
-            <main className="relative flex h-full flex-col gap-4 overflow-y-auto bg-white text-black dark:text-black rounded-[15px] p-8 px-12">
+         <div className="min-w-0 p-2">
+            <main className="relative flex h-full min-w-0 flex-col gap-4 overflow-x-hidden overflow-y-auto rounded-[15px] bg-white p-5 pt-20 text-black dark:text-black sm:p-8 sm:px-12 md:pt-8">
                <Image
                   src={ParternBg.src}
                   alt=""

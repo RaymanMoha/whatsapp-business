@@ -5,6 +5,7 @@ import { ensurePaymentReceipt } from "@/src/receipt-store";
 import { clearCart } from "@/src/cart-store";
 import { commitPaidOrder, syncOrderFromPayment } from "@/src/order-store";
 import { enqueuePaymentDelivery } from "@/src/message-queue";
+import { recordPromotionRedemption } from "@/src/promotion-store";
 
 function secretsMatch(received: string, expected: string) {
    const left = Buffer.from(received);
@@ -28,6 +29,9 @@ export async function POST(request: NextRequest) {
    const receivedSecret = request.nextUrl.searchParams.get("token") || request.headers.get("x-callback-token") || "";
 
    if (!expectedSecret || !secretsMatch(receivedSecret, expectedSecret)) {
+      console.warn("[mpesa-callback] rejected unauthorized callback", {
+         secretConfigured: Boolean(expectedSecret),
+      });
       return NextResponse.json({ ResultCode: 1, ResultDesc: "Unauthorized callback" }, { status: 401 });
    }
 
@@ -35,11 +39,18 @@ export async function POST(request: NextRequest) {
    const callback = body?.Body?.stkCallback;
    const checkoutRequestId = String(callback?.CheckoutRequestID || "");
    if (!checkoutRequestId || !Number.isInteger(callback?.ResultCode)) {
+      console.warn("[mpesa-callback] rejected invalid payload");
       return NextResponse.json({ ResultCode: 1, ResultDesc: "Invalid callback payload" }, { status: 400 });
    }
 
+   console.info("[mpesa-callback] received", {
+      checkoutRequestId,
+      resultCode: callback.ResultCode,
+   });
+
    const existing = await getPaymentByCheckoutRequestId(checkoutRequestId);
    if (!existing) {
+      console.warn("[mpesa-callback] payment not found", { checkoutRequestId });
       return NextResponse.json({ ResultCode: 1, ResultDesc: "Unknown checkout request" }, { status: 404 });
    }
 
@@ -80,6 +91,7 @@ export async function POST(request: NextRequest) {
    await Promise.all([
       payment.chatId ? clearCart(payment.chatId).catch(() => null) : Promise.resolve(),
       commitPaidOrder(order.id),
+      payment.promotion?.id ? recordPromotionRedemption(payment.promotion.id, payment.id) : Promise.resolve(),
    ]);
 
    const receipt = await ensurePaymentReceipt(payment);
@@ -92,6 +104,13 @@ export async function POST(request: NextRequest) {
       type: "payment-receipt",
       paymentId: payment.id,
       orderId: order.id,
+   });
+
+   console.info("[mpesa-callback] receipt delivery queued", {
+      checkoutRequestId,
+      paymentId: payment.id,
+      orderId: order.id,
+      duplicate,
    });
 
    return NextResponse.json({ ResultCode: 0, ResultDesc: duplicate ? "Already processed" : "Accepted" });

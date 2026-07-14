@@ -14,6 +14,7 @@ import {
 import { ThumbsUp, ThumbsDown, Copy, RefreshCcw } from "lucide-react";
 import AI from "@/public/ai-logo.svg";
 import Image from "next/image";
+import { MessageContent } from "@/components/chat/message-content";
 
 export function ChatBubble({
    message,
@@ -53,7 +54,7 @@ export function ChatBubble({
                   ? "bg-[#D7DEDD] text-foreground animate-chat-in-right py-2"
                   : "bg-card text-foreground animate-chat-in-left"
             )}>
-            {message.content}
+            <MessageContent content={message.content} />
             {!isUser && (
                <div className="mt-2 flex items-center gap-3 text-muted-foreground">
                   <TooltipProvider>
