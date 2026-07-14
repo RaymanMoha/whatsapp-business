@@ -66,6 +66,7 @@ export async function helperAssistantReply(userInput: string): Promise<string> {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ message: userInput }),
+      signal: AbortSignal.timeout(15000),
     })
 
     if (!response.ok) {

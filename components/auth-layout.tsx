@@ -1,8 +1,8 @@
 import type React from "react";
 import Image from "next/image";
 import Bg from "@/public/auth-commerce-ai.webp";
-import Logo from "@/public/whatsapp-commerce-logo.svg";
 import ParternBg from "@/public/pattern-bg.png";
+import { BrandLogo } from "@/components/brand-logo";
 
 interface AuthLayoutProps {
    children: React.ReactNode;
@@ -34,12 +34,10 @@ export function AuthLayout({ children }: AuthLayoutProps) {
                {/* Overlay content */}
                <div className="absolute inset-0 bg-gradient-to-bl from-black/70 via-transparent to-black/90 rounded-r-3xl" />
                <div className="absolute top-8 left-8">
-                  <Image
-                     src={Logo.src}
-                     alt="WhatsApp Commerce Hub logo"
-                     width={150}
-                     height={41}
-                     className="object-contain"
+                  <BrandLogo
+                     variant="color"
+                     className="h-[74px] w-auto drop-shadow-[0_8px_24px_rgba(0,0,0,.35)]"
+                     sizes="134px"
                      priority
                   />
                </div>

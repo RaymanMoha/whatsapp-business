@@ -34,6 +34,7 @@ export const navGroups: NavGroup[] = [
       label: "WhatsApp Commerce",
       items: [
          { label: "Product Catalog", href: "/dashboard/products" },
+         { label: "Promotions", href: "/dashboard/promotions" },
          { label: "Orders", href: "/dashboard/orders" },
          { label: "M-Pesa Payments", href: "/dashboard/payments" },
          { label: "Customer Questions", href: "/dashboard/questions" },
@@ -64,13 +65,14 @@ export const navGroups: NavGroup[] = [
       label: "Account",
       items: [
          { label: "Profile", href: "/dashboard/profile" },
+         { label: "Google Tools", href: "/dashboard/google-tools" },
          { label: "Settings", href: "/dashboard/settings" },
       ],
    },
    { id: "ask-anything", label: "Ask Commerce AI", href: "/dashboard/chat" },
 ];
 
-export const HERO_TITLE = "WhatsApp Commerce Hub";
+export const HERO_TITLE = "AppBase Commerce Hub";
 export const HERO_SUBTITLE =
    "Manage product pictures, availability, customer questions, and AI replies from one private WhatsApp commerce system.";
 

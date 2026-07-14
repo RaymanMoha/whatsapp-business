@@ -1,7 +1,6 @@
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
 import { LiveCustomers } from "@/components/commerce/live-customers";
 import Heading from "@/components/heading";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { listCustomerSummaries } from "@/src/customer-store";
 
 export const dynamic = "force-dynamic";
@@ -16,14 +15,7 @@ export default async function CustomersPage() {
                title="Customers"
                description="Customer profiles and conversation history from live WhatsApp messages."
             />
-            <Card className="text-black dark:text-black">
-               <CardHeader>
-                  <CardTitle>Live WhatsApp customers</CardTitle>
-               </CardHeader>
-               <CardContent>
-                  <LiveCustomers initialCustomers={customers} />
-               </CardContent>
-            </Card>
+            <LiveCustomers initialCustomers={customers} />
          </div>
       </DashboardLayout>
    );

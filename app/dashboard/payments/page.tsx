@@ -6,7 +6,17 @@ import { getMpesaStatus, listPayments } from "@/src/mpesa-store";
 export const dynamic = "force-dynamic";
 
 export default async function PaymentsPage() {
-   const [mpesa, payments] = await Promise.all([getMpesaStatus(), listPayments()]);
+   const [mpesaResult, paymentsResult] = await Promise.allSettled([getMpesaStatus(), listPayments()]);
+   const mpesa = mpesaResult.status === "fulfilled"
+      ? mpesaResult.value
+      : {
+           configured: false,
+           missing: ["Commerce data temporarily unavailable"],
+           environment: "unknown",
+           shortCode: null,
+           callbackUrl: null,
+        };
+   const payments = paymentsResult.status === "fulfilled" ? paymentsResult.value : [];
 
    return (
       <DashboardLayout>

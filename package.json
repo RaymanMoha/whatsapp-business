@@ -10,11 +10,13 @@
     "lint": "eslint",
     "bot:dev": "node --watch src/server.js",
     "bot:start": "node src/server.js",
-    "check": "node --check src/server.js && node --check src/auth-password.js && node --check src/auth-attempt-store.js && node --check src/webhook-auth.js && node --check src/cart.js && node --check src/cart-store.js && node --check src/settings-store.js && node --check src/knowledge.js && node --check src/knowledge-store.js && node --check src/catalog.js && node --check src/catalog-import.js && node --check src/payment-status.js && node --check src/message-queue.js && node --check src/order-store.js && node --check src/receipt.js && node --check src/receipt-store.js && npx tsc --noEmit",
+    "demo:herwardrobe": "node --env-file=.env scripts/seed-herwardrobeke-demo.mjs",
+    "check": "node --check src/server.js && node --check src/auth-password.js && node --check src/auth-attempt-store.js && node --check src/webhook-auth.js && node --check src/cart.js && node --check src/cart-store.js && node --check src/settings-store.js && node --check src/knowledge.js && node --check src/knowledge-store.js && node --check src/promotion-engine.js && node --check src/promotion-store.js && node --check src/catalog.js && node --check src/catalog-import.js && node --check src/payment-status.js && node --check src/message-queue.js && node --check src/order-store.js && node --check src/receipt.js && node --check src/receipt-store.js && npx tsc --noEmit",
     "test": "node --test src/*.test.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
+    "@pdf-lib/fontkit": "^1.1.1",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-avatar": "^1.1.10",
     "@radix-ui/react-checkbox": "^1.0.5",
@@ -41,6 +43,7 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.62.0",
+    "react-icons": "^5.7.0",
     "tailwind-merge": "^3.3.1",
     "zod": "^3.25.76"
   },
