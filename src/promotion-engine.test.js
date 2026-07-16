@@ -50,3 +50,19 @@ test('rejects expired and exhausted promotions', () => {
   assert.equal(isPromotionActive(promotion({ endsAt: '2026-07-12T10:00:00.000Z' }), at), false)
   assert.equal(isPromotionActive(promotion({ redemptionLimit: 2, redemptionCount: 2 }), at), false)
 })
+
+test('treats free-delivery copy as a delivery benefit instead of discounting products', () => {
+  const freeDelivery = promotion({
+    id: 'delivery',
+    name: 'Free delivery on Thursday',
+    description: 'Delivery fee waived for Thursday orders',
+    type: 'fixed',
+    value: 500,
+  })
+  const pricing = calculateCartPricing(items, [freeDelivery])
+
+  assert.equal(pricing.subtotal, 500)
+  assert.equal(pricing.discount, 0)
+  assert.equal(pricing.total, 500)
+  assert.equal(pricing.promotion.type, 'free_delivery')
+})

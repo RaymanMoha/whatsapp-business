@@ -7,12 +7,14 @@ import {
   getCartItemCount,
   getCartTotal,
   isAddToCartIntent,
+  isCartQuantityIntent,
   isProductSelectionIntent,
   isRemoveFromCartIntent,
   isViewCartIntent,
   matchCartProducts,
   removeCartItems,
   revalidateCartItems,
+  setCartItemQuantity,
 } from './cart.js'
 
 const products = [
@@ -54,6 +56,18 @@ test('supports quantity, removal, and stock limits', () => {
 
   assert.equal(capped[0].quantity, 5)
   assert.deepEqual(removeCartItems(capped, ['honey']), [])
+})
+
+test('recognizes natural quantity requests and replaces the saved quantity exactly', () => {
+  assert.equal(isCartQuantityIntent('I want to buy 5 pcs'), true)
+  assert.equal(isCartQuantityIntent('I said I want 5 pcs and not 1. Can you update my order?'), true)
+  assert.equal(isCartQuantityIntent('Is this available?'), false)
+
+  const existing = addCartItems([], [products[0]], 1)
+  const updated = setCartItemQuantity(existing, products[0], 5)
+
+  assert.equal(updated[0].quantity, 5)
+  assert.equal(updated[0].lineTotal, 5)
 })
 
 test('revalidates availability before checkout', () => {

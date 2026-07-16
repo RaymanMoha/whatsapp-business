@@ -7,6 +7,7 @@ import {
   formatCartSummary,
   getCartItemCount,
   isAddToCartIntent,
+  isCartQuantityIntent,
   isClearCartIntent,
   isProductSelectionIntent,
   isRemoveFromCartIntent,
@@ -14,6 +15,7 @@ import {
   matchCartProducts,
   removeCartItems,
   revalidateCartItems,
+  setCartItemQuantity,
 } from './cart.js'
 import { clearCart, getCart, saveCart } from './cart-store.js'
 import { businessProfile } from './knowledge.js'
@@ -339,6 +341,37 @@ async function buildCartReply(incoming, products, promotions) {
   const explicitAdd = isAddToCartIntent(incoming.text)
   const implicitSelection = !explicitAdd && isProductSelectionIntent(incoming.text, matchedSelection)
 
+  if (!explicitAdd && isCartQuantityIntent(incoming.text)) {
+    const targetProduct =
+      (matchedSelection.length === 1 ? matchedSelection[0] : null) ||
+      pendingProducts.get(chatId) ||
+      (currentCart.length === 1
+        ? products.find((product) => product.id === currentCart[0].productId)
+        : null)
+
+    if (targetProduct) {
+      const requestedQuantity = extractCartQuantity(incoming.text)
+      const nextCart = setCartItemQuantity(currentCart, targetProduct, requestedQuantity)
+      const updatedItem = nextCart.find((item) => item.productId === targetProduct.id)
+      await saveCart(chatId, nextCart)
+      pendingProducts.set(chatId, targetProduct)
+      pendingPayments.delete(chatId)
+
+      if (!updatedItem) {
+        return `${targetProduct.name} is currently unavailable. Please choose another product.`
+      }
+
+      const stockNote = updatedItem.quantity < requestedQuantity
+        ? ` Only ${updatedItem.quantity} are currently in stock.`
+        : ''
+      return [
+        `Updated your cart to ${updatedItem.quantity} x ${targetProduct.name}.${stockNote}`,
+        formatCartSummary(nextCart, 'Your cart', calculateCartPricing(nextCart, promotions)),
+        'Reply "pay cart" when ready, or keep adding products.',
+      ].join('\n\n')
+    }
+  }
+
   if (explicitAdd || implicitSelection) {
     const matched = matchedSelection
     if (!matched.length) {
@@ -400,9 +433,11 @@ async function buildPaymentReply(incoming, products, promotions) {
   const typedPhone = extractPaymentPhone(incoming.text)
   const shouldContinuePayment = Boolean(
     hasPaymentIntent ||
-      pendingPayment ||
-      (currentCart.length && typedPhone) ||
-      (pendingProducts.has(incoming.chatId) && typedPhone),
+      (typedPhone && (
+        currentCart.length ||
+        pendingPayment ||
+        pendingProducts.has(incoming.chatId)
+      )),
   )
 
   if (!shouldContinuePayment) return null

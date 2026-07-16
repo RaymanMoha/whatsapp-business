@@ -58,6 +58,16 @@ export function extractCartQuantity(text) {
   return Number.isInteger(quantity) && quantity > 0 ? Math.min(quantity, 99) : 1
 }
 
+export function isCartQuantityIntent(text) {
+  const normalized = normalizeText(text)
+  const hasQuantity = /(?:^|\s)\d{1,2}(?:\s|$)/.test(normalized)
+  const hasPurchaseLanguage = /\b(want|buy|order|take|need|quantity|piece|pieces|pcs|update|change|make)\b/.test(
+    normalized,
+  )
+
+  return hasQuantity && hasPurchaseLanguage
+}
+
 export function addCartItems(currentItems, products, quantity = 1) {
   const next = currentItems.map((item) => ({ ...item }))
 
@@ -81,6 +91,33 @@ export function addCartItems(currentItems, products, quantity = 1) {
   }
 
   return next.filter((item) => item.quantity > 0)
+}
+
+export function setCartItemQuantity(currentItems, product, quantity) {
+  if (!product?.available) return currentItems.map((item) => ({ ...item }))
+
+  const requestedQuantity = Math.max(Number(quantity || 0), 0)
+  const availableStock = Math.max(Number(product.stock || 0), 0)
+  const nextQuantity = Math.min(requestedQuantity, availableStock, 99)
+  const next = currentItems.map((item) => ({ ...item }))
+  const existing = next.find((item) => item.productId === product.id)
+
+  if (nextQuantity < 1) {
+    return next.filter((item) => item.productId !== product.id)
+  }
+
+  const updatedItem = {
+    productId: product.id,
+    name: product.name,
+    category: product.category || '',
+    unitPrice: Number(product.price || 0),
+    quantity: nextQuantity,
+    lineTotal: Number(product.price || 0) * nextQuantity,
+  }
+
+  if (existing) Object.assign(existing, updatedItem)
+  else next.push(updatedItem)
+  return next
 }
 
 export function removeCartItems(currentItems, productIds) {
@@ -143,6 +180,9 @@ export function formatCartSummary(items, heading = 'Your cart', pricing = null) 
           `Subtotal: KES ${subtotal}`,
           `${pricing?.promotion?.name || 'Promotion'}: -KES ${discount}`,
         ]
+      : []),
+    ...(pricing?.promotion?.type === 'free_delivery'
+      ? [`${pricing.promotion.name}: delivery fee waived`]
       : []),
     `Total: KES ${total}`,
   ].join('\n')

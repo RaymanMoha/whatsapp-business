@@ -4,6 +4,11 @@ function money(value) {
   return Math.max(Number(value || 0), 0)
 }
 
+export function isDeliveryOnlyPromotion(promotion) {
+  const customerCopy = `${promotion?.name || ''} ${promotion?.description || ''}`.toLowerCase()
+  return /\b(free delivery|free shipping|delivery fee|shipping fee)\b/.test(customerCopy)
+}
+
 export function isPromotionActive(promotion, at = new Date()) {
   if (!promotion?.active || !PROMOTION_TYPES.has(promotion.type)) return false
 
@@ -62,6 +67,7 @@ export function calculateCartPricing(items, promotions = [], options = {}) {
 
   const candidates = (Array.isArray(promotions) ? promotions : [])
     .filter((promotion) => isPromotionActive(promotion, at))
+    .filter((promotion) => !isDeliveryOnlyPromotion(promotion))
     .filter((promotion) => subtotal >= money(promotion.minimumSpend))
     .map((promotion) => ({
       promotion,
@@ -71,6 +77,12 @@ export function calculateCartPricing(items, promotions = [], options = {}) {
     .sort((left, right) => right.discount - left.discount || String(left.promotion.name).localeCompare(String(right.promotion.name)))
 
   const best = candidates[0] || null
+  const deliveryPromotion = best
+    ? null
+    : (Array.isArray(promotions) ? promotions : [])
+      .filter((promotion) => isPromotionActive(promotion, at))
+      .filter((promotion) => subtotal >= money(promotion.minimumSpend))
+      .find((promotion) => isDeliveryOnlyPromotion(promotion)) || null
   const discount = best?.discount || 0
   return {
     subtotal,
@@ -82,11 +94,18 @@ export function calculateCartPricing(items, promotions = [], options = {}) {
           name: best.promotion.name,
           type: best.promotion.type,
         }
+      : deliveryPromotion
+        ? {
+            id: deliveryPromotion.id,
+            name: deliveryPromotion.name,
+            type: 'free_delivery',
+          }
       : null,
   }
 }
 
 export function promotionCustomerDescription(promotion) {
+  if (isDeliveryOnlyPromotion(promotion) || promotion.type === 'free_delivery') return 'Free delivery'
   if (promotion.type === 'percentage') return `${promotion.value}% off`
   if (promotion.type === 'fixed') return `KES ${promotion.value} off`
   return `Buy ${promotion.buyQuantity || 1}, get ${promotion.getQuantity || 1} free`
