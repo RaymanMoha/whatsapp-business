@@ -13,7 +13,7 @@ import Image from "next/image";
 
 const whatsappNumber = "254703757813";
 const whatsappMessage = encodeURIComponent(
-   "Hi Rayman, I would like to join the AppBase founding merchant programme.",
+   "Hi AppBase, I would like to see the merchant demo.",
 );
 
 export const appBaseWhatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;

@@ -38,6 +38,7 @@ import { calculateCartPricing, promotionCustomerDescription } from './promotion-
 import { readActivePromotions } from './promotion-store.js'
 import { writeRuntimeHeartbeat } from './runtime-heartbeat.js'
 import { getWahaConfig } from './waha.js'
+import { buildDemoReply } from './demo.js'
 
 const app = express()
 
@@ -163,11 +164,14 @@ async function processIncomingMessage(incoming) {
     text: incoming.text,
     status: 'received',
   })
-  const [products, promotions] = await Promise.all([readProducts(), readActivePromotions()])
-  const cartReply = await buildCartReply(incoming, products, promotions)
+  const demoReply = buildDemoReply(incoming.text)
+  const [products, promotions] = demoReply
+    ? [[], []]
+    : await Promise.all([readProducts(), readActivePromotions()])
+  const cartReply = demoReply ? null : await buildCartReply(incoming, products, promotions)
   const paymentReply = cartReply ? null : await buildPaymentReply(incoming, products, promotions)
-  const promotionReply = cartReply || paymentReply ? null : buildPromotionReply(incoming.text, promotions)
-  const commerceReply = cartReply || paymentReply || promotionReply
+  const promotionReply = demoReply || cartReply || paymentReply ? null : buildPromotionReply(incoming.text, promotions)
+  const commerceReply = demoReply || cartReply || paymentReply || promotionReply
   const reply = sanitizeWhatsAppReply(commerceReply || await buildReply(incoming, products, promotions))
   await sendWhatsAppText(incoming.chatId, reply, incoming.session)
   if (!commerceReply) {
@@ -255,7 +259,10 @@ app.post('/test/reply', async (request, response) => {
     return
   }
 
-  const [products, promotions] = await Promise.all([readProducts(), readActivePromotions()])
+  const demoReply = buildDemoReply(message)
+  const [products, promotions] = demoReply
+    ? [[], []]
+    : await Promise.all([readProducts(), readActivePromotions()])
   const incoming = {
     id: `test-${Date.now()}`,
     chatId,
@@ -263,10 +270,10 @@ app.post('/test/reply', async (request, response) => {
     text: message,
     fromMe: false,
   }
-  const cartReply = await buildCartReply(incoming, products, promotions)
+  const cartReply = demoReply ? null : await buildCartReply(incoming, products, promotions)
   const paymentReply = cartReply ? null : await buildPaymentReply(incoming, products, promotions)
-  const promotionReply = cartReply || paymentReply ? null : buildPromotionReply(incoming.text, promotions)
-  const commerceReply = cartReply || paymentReply || promotionReply
+  const promotionReply = demoReply || cartReply || paymentReply ? null : buildPromotionReply(incoming.text, promotions)
+  const commerceReply = demoReply || cartReply || paymentReply || promotionReply
   const reply = sanitizeWhatsAppReply(commerceReply || await buildReply(incoming, products, promotions))
   if (!commerceReply) rememberPendingProduct(chatId, message, products)
 

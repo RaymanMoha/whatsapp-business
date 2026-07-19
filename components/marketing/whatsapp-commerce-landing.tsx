@@ -30,6 +30,7 @@ import {
    ContactSection,
    PricingSection,
 } from "@/components/marketing/pricing-contact";
+import { KenyaCommerceSection } from "@/components/marketing/kenya-commerce-section";
 
 const workflow = [
    {
@@ -321,7 +322,7 @@ export function WhatsappCommerceLanding() {
             <div className="mx-auto hidden h-[calc(100svh-81px)] min-h-[590px] max-h-[680px] max-w-[1440px] grid-cols-[1.04fr_.96fr] items-center gap-8 px-8 lg:grid xl:px-10">
                <div className="relative z-10 max-w-[720px] py-10">
                   <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-[#168243]/18 bg-[#dff7e5] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.15em] text-[#08742e]"><span className="size-1.5 rounded-full bg-[#18a54d] shadow-[0_0_0_4px_rgba(24,165,77,.12)]" /> Commerce that closes the loop</div>
-                  <h1 className="text-[clamp(72px,5.9vw,96px)] font-semibold leading-[.86] tracking-[-0.072em]"><span className="block">Turn chats into</span><span className="block text-[#168243]">paid orders.</span></h1>
+                  <h1 className="text-[clamp(72px,5.9vw,96px)] font-semibold leading-[.86] tracking-[-0.072em]"><span className="block">Turn chats into</span>{" "}<span className="block text-[#168243]">paid orders.</span></h1>
                   <p className="mt-7 max-w-[550px] text-[18px] leading-8 text-black/58">From product discovery to confirmed M-Pesa payment, every step stays inside the conversation.</p>
                   <div className="mt-8 flex flex-wrap items-center gap-3">
                      <a href={appBaseWhatsappUrl} target="_blank" rel="noreferrer" className="group inline-flex items-center gap-3 rounded-xl bg-[#07120d] px-7 py-4 text-sm font-bold text-white shadow-[0_16px_38px_rgba(0,0,0,.18)] transition hover:-translate-y-0.5 hover:bg-black">Book a guided setup <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" /></a>
@@ -358,9 +359,9 @@ export function WhatsappCommerceLanding() {
                />
                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-[#03100a]" />
                <div className="absolute inset-x-0 bottom-0 px-5 pb-12 pt-32">
-                  <h1 className="text-[58px] font-semibold leading-[.88] tracking-[-0.07em]">
+                  <p className="text-[58px] font-semibold leading-[.88] tracking-[-0.07em]">
                      Turn chats into <span className="text-[#5bea78]">paid orders.</span>
-                  </h1>
+                  </p>
                   <p className="mt-6 max-w-sm text-[16px] leading-7 text-white/72">From product discovery to confirmed M-Pesa payment, every step stays inside the conversation.</p>
                   <div className="mt-7 flex flex-wrap gap-3">
                      <a href={appBaseWhatsappUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-3 rounded-xl bg-[#31db70] px-6 py-3.5 text-sm font-bold text-[#031008]">Book a guided setup <ArrowRight className="size-4" /></a>
@@ -439,11 +440,12 @@ export function WhatsappCommerceLanding() {
             </div>
          </section>
 
+         <KenyaCommerceSection />
          <PricingSection />
          <ContactSection />
 
          <footer className="bg-[#020806] px-5 py-14 text-white">
-            <div className="mx-auto max-w-[1240px]"><div className="grid gap-10 border-b border-white/10 pb-12 md:grid-cols-[1.4fr_.8fr_.8fr_1fr]"><Logo inverse /><div><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-white/28">Product</p><div className="mt-5 space-y-3 text-sm text-white/55"><Link className="block hover:text-white" href="#how-it-works">How it works</Link><Link className="block hover:text-white" href="#features">Features</Link><Link className="block hover:text-white" href="#payments">Payments</Link><Link className="block hover:text-white" href="#pricing">Pricing</Link></div></div><div><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-white/28">Company</p><div className="mt-5 space-y-3 text-sm text-white/55"><Link className="block hover:text-white" href="#contact">Contact</Link><Link className="block hover:text-white" href="/signin">Log in</Link><Link className="block hover:text-white" href="/privacy">Privacy</Link><Link className="block hover:text-white" href="/terms">Terms</Link></div></div><p className="max-w-xs text-sm leading-6 text-white/42">Replies are based on approved business information. AI can make mistakes, so merchants should review their setup and product details.</p></div><div className="flex flex-col gap-3 pt-7 text-[11px] text-white/28 sm:flex-row sm:items-center sm:justify-between"><p>© 2026 AppBase</p><p>Built for businesses that sell through chat.</p></div></div>
+            <div className="mx-auto max-w-[1240px]"><div className="grid gap-10 border-b border-white/10 pb-12 md:grid-cols-[1.2fr_.8fr_.8fr_1fr]"><Logo inverse /><div><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-white/28">Product</p><div className="mt-5 space-y-3 text-sm text-white/55"><Link className="block hover:text-white" href="#how-it-works">How it works</Link><Link className="block hover:text-white" href="#features">Features</Link><Link className="block hover:text-white" href="#payments">Payments</Link><Link className="block hover:text-white" href="#pricing">Pricing</Link></div></div><div><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-white/28">Kenya guides</p><div className="mt-5 space-y-3 text-sm text-white/55"><Link className="block hover:text-white" href="/whatsapp-commerce-kenya">WhatsApp commerce</Link><Link className="block hover:text-white" href="/mpesa-whatsapp-payments">M-Pesa payments</Link><Link className="block hover:text-white" href="#questions">Questions</Link></div></div><div><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-white/28">Company</p><div className="mt-5 space-y-3 text-sm text-white/55"><Link className="block hover:text-white" href="#contact">Contact</Link><Link className="block hover:text-white" href="/signin">Log in</Link><Link className="block hover:text-white" href="/privacy">Privacy</Link><Link className="block hover:text-white" href="/terms">Terms</Link></div><p className="mt-6 max-w-xs text-sm leading-6 text-white/42">Replies use approved business information. AI can make mistakes, so merchants should review their setup.</p></div></div><div className="flex flex-col gap-3 pt-7 text-[11px] text-white/28 sm:flex-row sm:items-center sm:justify-between"><p>© 2026 AppBase</p><p>Built in Kenya for businesses that sell through chat.</p></div></div>
          </footer>
       </main>
    );
