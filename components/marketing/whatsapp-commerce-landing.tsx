@@ -25,6 +25,11 @@ import {
 } from "lucide-react";
 import CommerceWeekenderImage from "@/public/commerce-weekender-hero.webp";
 import { BrandLogo } from "@/components/brand-logo";
+import {
+   appBaseWhatsappUrl,
+   ContactSection,
+   PricingSection,
+} from "@/components/marketing/pricing-contact";
 
 const workflow = [
    {
@@ -140,31 +145,90 @@ function ConnectedTools() {
 
 function CommerceCanvas() {
    const stages = [
-      { label: "Customer message", icon: MessageCircle, content: <div className="mt-9 rounded-[16px_16px_16px_4px] border border-white/8 bg-white/15 p-4 text-[13px] leading-5 text-white">Do you have the canvas bag in olive?</div> },
-      { label: "Show products", icon: ShoppingBag, content: <><div className="relative mt-6 h-32 overflow-hidden rounded-xl border border-white/10"><Image src="/brand-catalog-studio.webp" alt="Curated merchant products ready for the WhatsApp catalog" fill className="object-cover object-[62%_55%]" sizes="220px" /></div><p className="mt-4 text-[13px] font-semibold">Curated catalog</p><p className="mt-1 text-[11px] font-medium text-[#9dff2f]">Rich images · Live stock</p></> },
-      { label: "Approved reply", icon: Bot, content: <div className="mt-9"><div className="mb-4 flex items-center gap-2 text-[11px] font-semibold text-[#9dff2f]"><Sparkles className="size-3.5" /> Approved answer</div><p className="text-[13px] leading-6 text-white/88">Yes, it is available in olive. I&apos;ve added one to your cart.</p></div> },
-      { label: "Payment request", icon: WalletCards, content: <div className="mt-8 text-center"><span className="mx-auto grid size-12 place-items-center rounded-full bg-[#9dff2f] text-black shadow-[0_0_28px_rgba(157,255,47,.25)]"><CreditCard className="size-5" /></span><p className="mt-5 text-[11px] text-white/60">M-Pesa total</p><p className="mt-1 text-2xl font-semibold">KES 3,500</p><div className="mt-5 rounded-xl bg-[#9dff2f] py-2.5 text-[11px] font-bold text-black">Send request</div></div> },
-      { label: "Order confirmed", icon: CheckCircle2, content: <div className="mt-8 text-center"><span className="mx-auto grid size-14 place-items-center rounded-full border border-[#9dff2f]/70 bg-[#9dff2f]/8 text-[#9dff2f] shadow-[0_0_24px_rgba(157,255,47,.12)]"><Check className="size-6" /></span><p className="mt-5 text-[15px] font-semibold text-white">Payment received</p><p className="mt-1.5 text-[10px] text-white/55">#WC-2418 · 10:24 AM</p></div> },
-      { label: "Receipt", icon: ReceiptText, content: <div className="mt-6 bg-[#fffdf7] p-4 text-black shadow-[0_18px_45px_rgba(0,0,0,.22)]"><p className="text-center text-[9px] font-bold tracking-[.2em]">URBAN SUPPLY</p><div className="my-4 border-t border-dashed border-black/25" /><p className="text-[10px] text-black/55">Receipt #WC-2418</p><div className="mt-5 flex justify-between text-[12px]"><span>Total</span><strong>KES 3,500</strong></div><p className="mt-4 text-[9px] font-semibold text-[#168243]">Paid via M-Pesa</p></div> },
+      { label: "Ask", icon: MessageCircle },
+      { label: "Discover", icon: ShoppingBag },
+      { label: "Reply", icon: Bot },
+      { label: "Pay", icon: WalletCards },
+      { label: "Confirm", icon: CheckCircle2 },
+      { label: "Receipt", icon: ReceiptText },
    ];
 
    return (
-      <div data-landing-reveal className="relative mt-16 overflow-hidden border-y border-[#9dff2f]/20 bg-[#06241a] text-white shadow-[0_38px_110px_rgba(2,25,18,.24)] lg:rounded-[30px] lg:border">
-         <div className="flex flex-col gap-3 border-b border-white/12 bg-white/[.025] px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3"><span className="relative size-2.5 rounded-full bg-[#9dff2f] shadow-[0_0_18px_#9dff2f]"><span className="absolute inset-[-5px] rounded-full border border-[#9dff2f]/40" /></span><p className="text-[11px] font-semibold uppercase tracking-[.16em] text-white/82">One conversation · six connected decisions</p></div>
-            <p className="text-[11px] font-medium text-white/45">Live commerce path</p>
-         </div>
-         <div className="landing-signal-line absolute left-[7%] right-[7%] top-[111px] hidden h-px bg-[#9dff2f]/65 lg:block" />
-         <div className="grid md:grid-cols-2 lg:grid-cols-6">
-            {stages.map(({ label, icon: Icon, content }, index) => (
-               <div key={label} className="group/stage relative min-h-[350px] border-b border-white/12 p-5 transition-colors duration-500 last:border-b-0 hover:bg-white/[.055] md:border-r lg:border-b-0 lg:last:border-r-0">
-                  <div className="relative z-10 flex items-center gap-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/70">
-                     <span className="grid size-8 place-items-center rounded-full border border-[#9dff2f]/75 bg-[#06241a] text-[#9dff2f]"><Icon className="size-3.5" /></span>
-                     <span className="lg:hidden xl:inline">{label}</span><span className="ml-auto text-white/32">0{index + 1}</span>
-                  </div>
-                  {content}
+      <div data-landing-reveal className="relative mt-16 overflow-hidden border-y border-[#9dff2f]/20 bg-[#041e15] text-white shadow-[0_40px_120px_rgba(2,25,18,.26)] lg:rounded-[34px] lg:border">
+         <div className="flex flex-col gap-4 border-b border-white/10 px-6 py-6 md:px-8 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+               <div className="flex items-center gap-3">
+                  <span className="relative size-2.5 rounded-full bg-[#9dff2f] shadow-[0_0_20px_#9dff2f]"><span className="absolute inset-[-5px] rounded-full border border-[#9dff2f]/40" /></span>
+                  <p className="text-[10px] font-semibold uppercase tracking-[.2em] text-white/68">Live commerce path</p>
                </div>
-            ))}
+               <p className="mt-3 text-xl font-semibold tracking-[-0.035em] md:text-2xl">One conversation. One clear sale.</p>
+            </div>
+            <p className="max-w-sm text-sm leading-6 text-white/42">Every decision stays connected, from the first product question to a receipt the customer can keep.</p>
+         </div>
+
+         <div className="relative border-b border-white/10 px-5 py-5 md:px-8">
+            <div className="absolute left-10 right-10 top-9 hidden h-px bg-gradient-to-r from-[#9dff2f]/15 via-[#9dff2f] to-[#9dff2f]/15 sm:block" />
+            <div className="grid grid-cols-3 gap-y-5 sm:grid-cols-6">
+               {stages.map(({ label, icon: Icon }, index) => (
+                  <div key={label} className="relative z-10 flex items-center gap-2 sm:flex-col sm:gap-2.5 sm:text-center">
+                     <span className={`grid size-8 place-items-center rounded-full border ${index === 5 ? "border-[#9dff2f] bg-[#9dff2f] text-[#041e15] shadow-[0_0_24px_rgba(157,255,47,.28)]" : "border-[#9dff2f]/55 bg-[#041e15] text-[#9dff2f]"}`}><Icon className="size-3.5" /></span>
+                     <span className="text-[9px] font-bold uppercase tracking-[.16em] text-white/48">{label}</span>
+                  </div>
+               ))}
+            </div>
+         </div>
+
+         <div className="grid lg:grid-cols-[1.05fr_1.08fr_.87fr]">
+            <article className="relative border-b border-white/10 p-6 md:p-8 lg:min-h-[520px] lg:border-b-0 lg:border-r">
+               <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#9dff2f]">01 · Customer intent</p>
+                  <span className="text-[10px] text-white/28">10:21 AM</span>
+               </div>
+               <div className="mt-7 max-w-[290px] rounded-[20px_20px_20px_5px] border border-white/10 bg-white/[.11] px-5 py-4 text-[15px] leading-6 text-white/90 shadow-[0_16px_40px_rgba(0,0,0,.12)]">
+                  Do you have the canvas bag in olive?
+               </div>
+               <div className="mt-6 overflow-hidden rounded-[22px] border border-white/10 bg-[#0a2a1f]">
+                  <div className="relative h-44">
+                     <Image src="/brand-catalog-studio.webp" alt="Olive canvas bag shown from the live catalog" fill className="object-cover object-[62%_55%]" sizes="390px" />
+                     <span className="absolute right-3 top-3 rounded-full bg-[#9dff2f] px-3 py-1 text-[9px] font-bold uppercase tracking-[.12em] text-[#041e15]">In stock</span>
+                  </div>
+                  <div className="flex items-end justify-between gap-4 p-5">
+                     <div><p className="font-semibold tracking-[-0.025em]">Canvas Weekender</p><p className="mt-1 text-[11px] text-white/40">Olive · Ready to order</p></div>
+                     <p className="text-lg font-semibold text-[#9dff2f]">KES 3,500</p>
+                  </div>
+               </div>
+            </article>
+
+            <article className="relative border-b border-white/10 bg-white/[.025] p-6 md:p-8 lg:min-h-[520px] lg:border-b-0 lg:border-r">
+               <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#9dff2f]">02 · AppBase acts</p>
+               <div className="mt-7 rounded-[22px] border border-[#9dff2f]/16 bg-[#0a2d20] p-5">
+                  <div className="flex items-center gap-3 text-[11px] font-semibold text-[#9dff2f]"><span className="grid size-8 place-items-center rounded-full bg-[#9dff2f]/10"><Sparkles className="size-4" /></span>Approved, product-aware reply</div>
+                  <p className="mt-5 text-[15px] leading-7 text-white/78">Yes, it is available in olive. I&apos;ve added one to your cart.</p>
+               </div>
+               <div className="mt-5 rounded-[22px] border border-white/10 bg-[#03150f] p-5">
+                  <div className="flex items-center justify-between border-b border-white/8 pb-4"><div className="flex items-center gap-3"><ShoppingCart className="size-4 text-[#9dff2f]" /><span className="text-sm font-semibold">Combined cart</span></div><span className="text-[10px] text-white/35">1 item</span></div>
+                  <div className="flex items-center justify-between py-5"><div><p className="text-sm font-semibold">Canvas Weekender</p><p className="mt-1 text-[11px] text-white/38">Qty 1</p></div><p className="font-semibold">KES 3,500</p></div>
+                  <button type="button" className="flex w-full items-center justify-center gap-3 rounded-xl bg-[#9dff2f] px-5 py-3.5 text-sm font-bold text-[#041e15] shadow-[0_16px_35px_rgba(157,255,47,.12)]"><CreditCard className="size-4" />Send M-Pesa request<ArrowRight className="size-4" /></button>
+               </div>
+            </article>
+
+            <article className="relative min-h-[520px] overflow-hidden p-6 md:p-8">
+               <div className="absolute -right-20 -top-24 size-72 rounded-full bg-[#9dff2f]/[.055] blur-2xl" />
+               <p className="relative text-[10px] font-bold uppercase tracking-[.18em] text-[#9dff2f]">03 · Verified outcome</p>
+               <div className="relative mt-8 text-center">
+                  <span className="mx-auto grid size-16 place-items-center rounded-full border border-[#9dff2f]/45 bg-[#9dff2f]/10 text-[#9dff2f] shadow-[0_0_34px_rgba(157,255,47,.12)]"><Check className="size-7" /></span>
+                  <p className="mt-5 text-sm font-semibold text-white/62">Payment confirmed</p>
+                  <p className="mt-1 text-[34px] font-semibold tracking-[-0.05em]">KES 3,500</p>
+                  <p className="mt-2 text-[10px] text-white/32">QJK8H7L3M2 · 10:24 AM</p>
+               </div>
+               <div className="relative mx-auto mt-7 max-w-[260px] rotate-[-1.5deg] bg-[#fffdf7] p-5 text-[#07120d] shadow-[0_24px_55px_rgba(0,0,0,.3)] transition-transform duration-500 hover:rotate-0">
+                  <div className="flex items-start justify-between gap-4"><div><p className="text-[9px] font-black uppercase tracking-[.2em]">Urban Supply</p><p className="mt-1 text-[9px] text-black/40">Receipt #WC-2418</p></div><ReceiptText className="size-4 text-[#168243]" /></div>
+                  <div className="my-4 border-t border-dashed border-black/20" />
+                  <div className="flex justify-between text-xs"><span className="text-black/50">Canvas Weekender</span><span>KES 3,500</span></div>
+                  <div className="mt-5 flex items-end justify-between border-t border-black/10 pt-4"><span className="text-[9px] font-semibold text-[#168243]">Paid via M-Pesa</span><strong className="text-sm">KES 3,500</strong></div>
+               </div>
+               <p className="relative mt-6 text-center text-[11px] font-semibold text-[#9dff2f]">Order unlocked · Receipt ready</p>
+            </article>
          </div>
       </div>
    );
@@ -242,10 +306,12 @@ export function WhatsappCommerceLanding() {
                   <Link href="#how-it-works" className="transition hover:text-black">How it works</Link>
                   <Link href="#features" className="transition hover:text-black">Features</Link>
                   <Link href="#payments" className="transition hover:text-black">Payments</Link>
+                  <Link href="#pricing" className="transition hover:text-black">Pricing</Link>
+                  <Link href="#contact" className="transition hover:text-black">Contact</Link>
                </div>
                <div className="flex items-center gap-2 sm:gap-3">
                   <Link href="/signin" className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[13px] font-semibold text-black/65 transition hover:bg-black/5 hover:text-black">Log in</Link>
-                  <Link href="/signin" className="hidden items-center gap-2 rounded-full bg-[#07120d] px-5 py-2.5 text-[13px] font-semibold text-white transition hover:-translate-y-0.5 hover:bg-black sm:inline-flex">Start selling <ArrowRight className="size-3.5" /></Link>
+                  <a href={appBaseWhatsappUrl} target="_blank" rel="noreferrer" className="hidden items-center gap-2 rounded-full bg-[#07120d] px-5 py-2.5 text-[13px] font-semibold text-white transition hover:-translate-y-0.5 hover:bg-black sm:inline-flex">Start selling <ArrowRight className="size-3.5" /></a>
                </div>
             </nav>
          </header>
@@ -258,7 +324,7 @@ export function WhatsappCommerceLanding() {
                   <h1 className="text-[clamp(72px,5.9vw,96px)] font-semibold leading-[.86] tracking-[-0.072em]"><span className="block">Turn chats into</span><span className="block text-[#168243]">paid orders.</span></h1>
                   <p className="mt-7 max-w-[550px] text-[18px] leading-8 text-black/58">From product discovery to confirmed M-Pesa payment, every step stays inside the conversation.</p>
                   <div className="mt-8 flex flex-wrap items-center gap-3">
-                     <Link href="/signin" className="group inline-flex items-center gap-3 rounded-xl bg-[#07120d] px-7 py-4 text-sm font-bold text-white shadow-[0_16px_38px_rgba(0,0,0,.18)] transition hover:-translate-y-0.5 hover:bg-black">Open your storefront <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" /></Link>
+                     <a href={appBaseWhatsappUrl} target="_blank" rel="noreferrer" className="group inline-flex items-center gap-3 rounded-xl bg-[#07120d] px-7 py-4 text-sm font-bold text-white shadow-[0_16px_38px_rgba(0,0,0,.18)] transition hover:-translate-y-0.5 hover:bg-black">Book a guided setup <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" /></a>
                      <Link href="#how-it-works" className="inline-flex items-center gap-2 rounded-xl border border-black/18 bg-white/35 px-7 py-4 text-sm font-semibold backdrop-blur-sm transition hover:-translate-y-0.5 hover:border-black/35 hover:bg-white/70">See how it works <ChevronRight className="size-4" /></Link>
                   </div>
                   <div className="mt-8 flex max-w-[550px] flex-wrap gap-x-7 gap-y-3 border-t border-black/10 pt-5 text-[12px] text-black/48"><span className="inline-flex items-center gap-2"><CheckCircle2 className="size-4 text-[#08742e]" /> No new app for customers</span><span className="inline-flex items-center gap-2"><CheckCircle2 className="size-4 text-[#08742e]" /> Verified payment status</span></div>
@@ -297,7 +363,7 @@ export function WhatsappCommerceLanding() {
                   </h1>
                   <p className="mt-6 max-w-sm text-[16px] leading-7 text-white/72">From product discovery to confirmed M-Pesa payment, every step stays inside the conversation.</p>
                   <div className="mt-7 flex flex-wrap gap-3">
-                     <Link href="/signin" className="inline-flex items-center gap-3 rounded-xl bg-[#31db70] px-6 py-3.5 text-sm font-bold text-[#031008]">Open your storefront <ArrowRight className="size-4" /></Link>
+                     <a href={appBaseWhatsappUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-3 rounded-xl bg-[#31db70] px-6 py-3.5 text-sm font-bold text-[#031008]">Book a guided setup <ArrowRight className="size-4" /></a>
                      <Link href="#how-it-works" className="inline-flex items-center gap-2 rounded-xl border border-white/35 bg-black/20 px-6 py-3.5 text-sm font-semibold backdrop-blur">How it works <ChevronRight className="size-4" /></Link>
                   </div>
                </div>
@@ -312,9 +378,8 @@ export function WhatsappCommerceLanding() {
             <div className="mx-auto max-w-[1240px]">
                <div data-landing-reveal className="grid items-end gap-8 lg:grid-cols-[1.3fr_.7fr]">
                   <h2 className="max-w-[850px] text-[clamp(52px,7vw,100px)] font-semibold leading-[.9] tracking-[-0.07em]">
-                     <span className="box-decoration-clone bg-[#9dff2f] px-[0.055em] [-webkit-box-decoration-break:clone]">
-                        Everything you need to sell, all in WhatsApp.
-                     </span>
+                     Everything you need to sell, all in{" "}
+                     <span className="inline-block bg-[#9dff2f] px-[0.055em] text-[#07120d]">WhatsApp.</span>
                   </h2>
                   <div className="border-l border-black/15 pl-6 lg:pb-2"><p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#168243]">The connected sales desk</p><p className="mt-4 max-w-md text-[17px] leading-8 text-black/55">From product discovery to payment confirmation, the entire sales cycle stays connected for you and effortless for your customer.</p></div>
                </div>
@@ -332,9 +397,27 @@ export function WhatsappCommerceLanding() {
 
          <section id="how-it-works" className="border-t border-black/10 bg-[#fffdf7] px-5 py-28 md:py-36">
             <div className="mx-auto max-w-[1240px]">
-               <div data-landing-reveal className="flex flex-col justify-between gap-6 md:flex-row md:items-end"><div><p className="text-[11px] font-bold uppercase tracking-[.18em] text-[#168243]">One connected sales loop</p><h2 className="mt-4 max-w-3xl text-5xl font-semibold leading-[.95] tracking-[-0.06em] md:text-7xl">From “is it available?” to a paid order.</h2></div><p className="max-w-sm border-l border-black/15 pl-6 text-sm leading-7 text-black/48">The assistant helps with the repetitive work. You keep the visibility and control.</p></div>
+               <div data-landing-reveal className="flex flex-col justify-between gap-6 md:flex-row md:items-end"><div><p className="text-[11px] font-bold uppercase tracking-[.18em] text-[#168243]">One connected sales loop</p><h2 className="mt-4 max-w-3xl text-5xl font-semibold leading-[.95] tracking-[-0.06em] md:text-7xl">From “is it available?” to a <span className="inline-block bg-[#9dff2f] px-[0.055em] text-[#07120d]">paid order.</span></h2></div><p className="max-w-sm border-l border-black/15 pl-6 text-sm leading-7 text-black/48">The assistant helps with the repetitive work. You keep the visibility and control.</p></div>
                <div className="mt-20 grid md:grid-cols-2 lg:grid-cols-4">
-                  {workflow.map(({ number, icon: Icon, title, description }, index) => <article data-landing-reveal key={number} className="group relative border-t border-black/15 py-8 transition-colors duration-500 md:min-h-[340px] md:border-r md:px-7 md:hover:bg-[#07120d] md:hover:text-white md:first:pl-7 md:last:border-r-0"><div className="flex items-center justify-between"><span className="text-sm font-semibold text-black/28 transition group-hover:text-white/35">{number}</span><span className="grid size-11 place-items-center rounded-full border border-black/10 transition duration-500 group-hover:border-[#9dff2f]/40 group-hover:bg-[#9dff2f] group-hover:text-black"><Icon className="size-4" /></span></div><h3 className="mt-16 text-2xl font-semibold tracking-[-0.04em]">{title}</h3><p className="mt-4 max-w-[250px] text-sm leading-7 text-black/50 transition group-hover:text-white/55">{description}</p>{index < workflow.length - 1 && <ArrowRight className="absolute -right-3.5 top-[46%] z-10 hidden size-7 rounded-full border border-black/10 bg-[#fffdf7] p-1.5 text-black/40 transition group-hover:border-[#9dff2f] group-hover:bg-[#9dff2f] group-hover:text-black lg:block" />}</article>)}
+                  {workflow.map(({ number, icon: Icon, title, description }, index) => {
+                     const isFirst = index === 0;
+                     return (
+                        <article
+                           data-landing-reveal
+                           key={number}
+                           className={`group relative border-t border-black/15 py-8 transition-colors duration-500 md:min-h-[340px] md:border-r md:px-7 md:first:pl-7 md:last:border-r-0 ${isFirst ? "bg-[#07120d] text-white" : "md:hover:bg-[#07120d] md:hover:text-white"}`}>
+                           <div className="flex items-center justify-between">
+                              <span className={`text-sm font-semibold transition ${isFirst ? "text-white/35" : "text-black/28 group-hover:text-white/35"}`}>{number}</span>
+                              <span className={`grid size-11 place-items-center rounded-full border transition duration-500 ${isFirst ? "border-[#9dff2f] bg-[#9dff2f] text-black" : "border-black/10 group-hover:border-[#9dff2f]/40 group-hover:bg-[#9dff2f] group-hover:text-black"}`}><Icon className="size-4" /></span>
+                           </div>
+                           <h3 className="mt-16 text-2xl font-semibold tracking-[-0.04em]">{title}</h3>
+                           <p className={`mt-4 max-w-[250px] text-sm leading-7 transition ${isFirst ? "text-white/55" : "text-black/50 group-hover:text-white/55"}`}>{description}</p>
+                           {index < workflow.length - 1 && (
+                              <ArrowRight className={`absolute -right-3.5 top-[46%] z-10 hidden size-7 rounded-full border p-1.5 transition lg:block ${isFirst ? "border-[#9dff2f] bg-[#9dff2f] text-black" : "border-black/10 bg-[#fffdf7] text-black/40 group-hover:border-[#9dff2f] group-hover:bg-[#9dff2f] group-hover:text-black"}`} />
+                           )}
+                        </article>
+                     );
+                  })}
                </div>
                <div data-landing-reveal className="mt-16 grid overflow-hidden rounded-[30px] bg-[#07120d] text-white shadow-[0_35px_100px_rgba(0,0,0,.14)] lg:grid-cols-[1.38fr_.62fr]">
                   <div className="relative min-h-[360px] lg:min-h-[500px]"><Image src="/brand-order-fulfilment.webp" alt="Merchant carefully preparing a paid customer order" fill className="object-cover object-center" sizes="(min-width: 1024px) 850px, 100vw" /></div>
@@ -346,7 +429,7 @@ export function WhatsappCommerceLanding() {
          <section id="payments" className="relative overflow-hidden bg-[#020a07] px-5 py-28 text-white md:py-36">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_40%,rgba(24,122,70,.19),transparent_38%)]" />
             <div className="relative mx-auto max-w-[1240px]">
-               <div data-landing-reveal className="grid items-end gap-10 lg:grid-cols-[1.02fr_.55fr]"><h2 className="max-w-[820px] text-[clamp(52px,6.6vw,94px)] font-normal leading-[.94] tracking-[-0.055em]" style={{ fontFamily: "var(--calson-font)" }}>A sale is only real when the payment is confirmed.</h2><div className="border-l border-[#9dff2f]/35 pl-6"><p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#9dff2f]">Verified, not assumed</p><p className="mt-4 max-w-sm text-[16px] leading-8 text-white/48">Your order moves forward only after the verified M-Pesa callback arrives. Every step stays visible.</p></div></div>
+               <div data-landing-reveal className="grid items-end gap-10 lg:grid-cols-[1.02fr_.55fr]"><h2 className="max-w-[820px] text-[clamp(52px,6.6vw,94px)] font-normal leading-[.94] tracking-[-0.055em]" style={{ fontFamily: "var(--calson-font)" }}>A sale is only real<br />when the <span className="inline-block bg-[#9dff2f] px-[0.045em] text-[#07120d]">payment</span><br /><span className="inline-block bg-[#9dff2f] px-[0.045em] text-[#07120d]">is confirmed.</span></h2><div className="border-l border-[#9dff2f]/35 pl-6"><p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#9dff2f]">Verified, not assumed</p><p className="mt-4 max-w-sm text-[16px] leading-8 text-white/48">Your order moves forward only after the verified M-Pesa callback arrives. Every step stays visible.</p></div></div>
                <figure data-landing-reveal className="relative mt-16 h-[360px] overflow-hidden rounded-[30px] border border-white/10 bg-[#07120d] md:h-[480px]">
                   <Image src="/brand-payment-confirmation.webp" alt="Merchant confirming a mobile payment beside a prepared customer parcel" fill className="object-cover object-[50%_55%]" sizes="(min-width: 1280px) 1240px, 100vw" />
                   <div className="absolute inset-0 bg-gradient-to-r from-[#03100b]/78 via-transparent to-transparent" />
@@ -356,15 +439,11 @@ export function WhatsappCommerceLanding() {
             </div>
          </section>
 
-         <section className="bg-[#9dff2f] px-5 py-20 md:py-24">
-            <div data-landing-reveal className="mx-auto flex max-w-[1240px] flex-col justify-between gap-10 lg:flex-row lg:items-end">
-               <div><p className="mb-6 text-[10px] font-bold uppercase tracking-[.2em]">Your customers are already there</p><h2 className="max-w-[850px] text-[clamp(56px,8vw,112px)] font-normal leading-[.82] tracking-[-0.065em]" style={{ fontFamily: "var(--calson-font)" }}>Turn conversations into orders.</h2></div>
-               <div className="lg:max-w-[300px] lg:pb-2"><p className="mb-6 text-sm leading-6 text-black/60">Set up your catalog once. Let every conversation become a clearer path to payment.</p><div className="flex flex-wrap gap-3"><Link href="/signin" className="group inline-flex items-center gap-4 rounded-xl bg-[#06110d] px-7 py-4 text-sm font-bold text-white transition hover:-translate-y-0.5">Start selling <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" /></Link><Link href="/signin" className="rounded-xl border border-black/30 px-7 py-4 text-sm font-bold transition hover:bg-black/5">Log in</Link></div></div>
-            </div>
-         </section>
+         <PricingSection />
+         <ContactSection />
 
          <footer className="bg-[#020806] px-5 py-14 text-white">
-            <div className="mx-auto max-w-[1240px]"><div className="grid gap-10 border-b border-white/10 pb-12 md:grid-cols-[1.4fr_.8fr_.8fr_1fr]"><Logo inverse /><div><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-white/28">Product</p><div className="mt-5 space-y-3 text-sm text-white/55"><Link className="block hover:text-white" href="#how-it-works">How it works</Link><Link className="block hover:text-white" href="#features">Features</Link><Link className="block hover:text-white" href="#payments">Payments</Link></div></div><div><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-white/28">Account</p><div className="mt-5 space-y-3 text-sm text-white/55"><Link className="block hover:text-white" href="/signin">Log in</Link><Link className="block hover:text-white" href="/privacy">Privacy</Link><Link className="block hover:text-white" href="/terms">Terms</Link></div></div><p className="max-w-xs text-sm leading-6 text-white/42">Replies are based on approved business information. AI can make mistakes, so merchants should review their setup and product details.</p></div><div className="flex flex-col gap-3 pt-7 text-[11px] text-white/28 sm:flex-row sm:items-center sm:justify-between"><p>© 2026 AppBase</p><p>Built for businesses that sell through chat.</p></div></div>
+            <div className="mx-auto max-w-[1240px]"><div className="grid gap-10 border-b border-white/10 pb-12 md:grid-cols-[1.4fr_.8fr_.8fr_1fr]"><Logo inverse /><div><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-white/28">Product</p><div className="mt-5 space-y-3 text-sm text-white/55"><Link className="block hover:text-white" href="#how-it-works">How it works</Link><Link className="block hover:text-white" href="#features">Features</Link><Link className="block hover:text-white" href="#payments">Payments</Link><Link className="block hover:text-white" href="#pricing">Pricing</Link></div></div><div><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-white/28">Company</p><div className="mt-5 space-y-3 text-sm text-white/55"><Link className="block hover:text-white" href="#contact">Contact</Link><Link className="block hover:text-white" href="/signin">Log in</Link><Link className="block hover:text-white" href="/privacy">Privacy</Link><Link className="block hover:text-white" href="/terms">Terms</Link></div></div><p className="max-w-xs text-sm leading-6 text-white/42">Replies are based on approved business information. AI can make mistakes, so merchants should review their setup and product details.</p></div><div className="flex flex-col gap-3 pt-7 text-[11px] text-white/28 sm:flex-row sm:items-center sm:justify-between"><p>© 2026 AppBase</p><p>Built for businesses that sell through chat.</p></div></div>
          </footer>
       </main>
    );
