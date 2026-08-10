@@ -1,6 +1,5 @@
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
 import { WhatsappSessionManager, type WhatsappConnectionState } from "@/components/commerce/whatsapp-session-manager";
-import Heading from "@/components/heading";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getWhatsappConnectionState } from "@/src/waha-session";
 
@@ -15,11 +14,15 @@ export default async function SessionPage() {
 
    return (
       <DashboardLayout hideHelperChat>
-         <div className="space-y-4 sm:space-y-6">
-            <Heading
-               title="WhatsApp Connection"
-               description="WhatsApp pairing, message delivery, automation readiness, and connection health."
-            />
+         <div className="mx-auto w-full max-w-[720px] space-y-3 pt-2 sm:max-w-none sm:space-y-6 sm:pt-0">
+            <div className="space-y-1.5 pr-16 sm:pr-0">
+               <h1 className="text-[1.45rem] font-semibold leading-tight tracking-tight text-zinc-950 sm:text-3xl">
+                  WhatsApp Connection
+               </h1>
+               <p className="text-sm leading-6 text-zinc-600 sm:max-w-3xl sm:text-base">
+                  Pair a phone, check message delivery, and reconnect the WhatsApp number safely.
+               </p>
+            </div>
             {connectionState ? (
                <WhatsappSessionManager initialState={connectionState} />
             ) : (
@@ -37,10 +40,10 @@ export default async function SessionPage() {
                </Card>
             )}
             <Card className="text-black dark:text-black">
-               <CardHeader className="p-4 sm:p-6">
-                  <CardTitle>Connection facts</CardTitle>
+               <CardHeader className="p-3 sm:p-6">
+                  <CardTitle className="text-base sm:text-lg">Connection facts</CardTitle>
                </CardHeader>
-               <CardContent className="grid gap-2 p-4 pt-0 sm:gap-3 sm:p-6 sm:pt-0 md:grid-cols-2">
+               <CardContent className="whatsapp-session-facts grid gap-2 p-3 pt-0 sm:gap-3 sm:p-6 sm:pt-0 md:grid-cols-2">
                   {[
                      ["Connection status", connectionState?.session.status || "Unavailable"],
                      ["Connection session", connectionState?.session.name || "Unavailable"],
@@ -49,7 +52,7 @@ export default async function SessionPage() {
                      ["WAHA engine", connectionState?.session.engine || "Not reported"],
                      ["Last checked", connectionState?.updatedAt ? new Date(connectionState.updatedAt).toLocaleString() : "Not checked"],
                   ].map(([label, value]) => (
-                     <div key={label} className="rounded-xl border p-3 sm:p-4">
+                     <div key={label} className="rounded-xl border bg-white/70 p-3 sm:p-4">
                         <strong className="block text-sm">{label}</strong>
                         <p className="mt-1 break-words text-sm text-zinc-600">{value}</p>
                      </div>

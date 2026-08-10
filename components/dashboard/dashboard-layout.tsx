@@ -37,9 +37,11 @@ export function DashboardLayout({
    return (
       <div
          className={
-            collapsed
-               ? "grid min-h-svh md:grid-cols-[4rem_1fr] bg-primary relative"
-               : "grid min-h-svh md:grid-cols-[18rem_1fr] bg-primary relative"
+            hideHelperChat
+               ? "session-dashboard-shell block min-h-svh bg-primary relative"
+               : collapsed
+                 ? "grid min-h-svh md:grid-cols-[4rem_1fr] bg-primary relative"
+                 : "grid min-h-svh md:grid-cols-[18rem_1fr] bg-primary relative"
          }>
          <Image
                src={ParternBg.src}
@@ -52,10 +54,15 @@ export function DashboardLayout({
          />
 
          {/* Static sidebar on md+ */}
-         <div className="hidden md:block">{sidebarNode}</div>
+         {hideHelperChat ? null : <div className="hidden md:block">{sidebarNode}</div>}
 
-         <div className="min-w-0 p-1.5 sm:p-2">
-            <main className="relative flex min-h-[calc(100svh-0.75rem)] min-w-0 flex-col gap-4 overflow-x-hidden overflow-y-auto rounded-xl bg-white p-4 pb-24 pt-20 text-black dark:text-black sm:min-h-[calc(100svh-1rem)] sm:rounded-[15px] sm:p-8 sm:px-12 md:pb-8 md:pt-8">
+         <div className={hideHelperChat ? "session-dashboard-main-wrap min-w-0 p-1.5 sm:p-2" : "min-w-0 p-1.5 sm:p-2"}>
+            <main
+               className={
+                  hideHelperChat
+                     ? "session-dashboard-main relative flex min-h-[calc(100svh-0.75rem)] min-w-0 flex-col gap-3 overflow-x-hidden overflow-y-auto rounded-xl bg-white p-3 pb-6 pt-16 text-black dark:text-black sm:min-h-[calc(100svh-1rem)] sm:gap-4 sm:rounded-[15px] sm:p-8 sm:px-12 md:pb-8 md:pt-8"
+                     : "relative flex min-h-[calc(100svh-0.75rem)] min-w-0 flex-col gap-4 overflow-x-hidden overflow-y-auto rounded-xl bg-white p-4 pb-24 pt-20 text-black dark:text-black sm:min-h-[calc(100svh-1rem)] sm:rounded-[15px] sm:p-8 sm:px-12 md:pb-8 md:pt-8"
+               }>
                <Image
                   src={ParternBg.src}
                   alt=""
@@ -66,7 +73,7 @@ export function DashboardLayout({
                   sizes="(max-width: 768px) 100vw, calc(100vw - 18rem)"
                />
                {/* Mobile menu toggle */}
-               <div className="absolute left-6 top-6 md:hidden z-20">
+               <div className={hideHelperChat ? "absolute left-4 top-4 z-20 md:hidden" : "absolute left-6 top-6 md:hidden z-20"}>
                   <Button
                      variant="secondary"
                      size="icon"
@@ -79,7 +86,7 @@ export function DashboardLayout({
                      )}
                   </Button>
                </div>
-               <div className="absolute right-6 top-6">
+               <div className={hideHelperChat ? "absolute right-4 top-4" : "absolute right-6 top-6"}>
                   <UserMenu />
                </div>
                {children}
