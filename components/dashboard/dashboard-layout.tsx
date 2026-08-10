@@ -8,6 +8,7 @@ import ParternBg from "@/public/pattern-bg.png";
 import { Button } from "@/components/ui/button";
 import { PanelRightOpen, PanelRightClose } from "lucide-react";
 import { HelperChat } from "@/components/helper-chat/helper-chat";
+import { DashboardIntro } from "./dashboard-intro";
 
 export function DashboardLayout({
    children,
@@ -93,6 +94,7 @@ export function DashboardLayout({
                <div className="h-4" />
                {/* Helper side chat on all dashboard pages */}
                {hideHelperChat ? null : <HelperChat />}
+               <DashboardIntro />
             </main>
          </div>
 
