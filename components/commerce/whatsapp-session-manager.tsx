@@ -112,12 +112,12 @@ export function WhatsappSessionManager({ initialState }: { initialState: Whatsap
    }, [needsPolling]);
 
    return (
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid gap-4 sm:gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
          <Card className="text-black dark:text-black">
-            <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <CardHeader className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-6">
                <div>
-                  <CardTitle>Self-service number connection</CardTitle>
-                  <p className="mt-2 text-sm leading-6 text-zinc-500">
+                  <CardTitle className="text-base leading-6 sm:text-lg">Self-service number connection</CardTitle>
+                  <p className="mt-1.5 text-sm leading-6 text-zinc-500 sm:mt-2">
                      Reconnect the WhatsApp number behind the configured WAHA session without exposing server keys.
                   </p>
                </div>
@@ -126,44 +126,44 @@ export function WhatsappSessionManager({ initialState }: { initialState: Whatsap
                   {state.session.status}
                </span>
             </CardHeader>
-            <CardContent className="space-y-6">
-               <div className="grid gap-3 md:grid-cols-2">
+            <CardContent className="space-y-4 p-4 pt-0 sm:space-y-6 sm:p-6 sm:pt-0">
+               <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-2">
                   {[
                      ["Session", state.session.name],
                      ["Connected phone", state.session.phone || "Not connected"],
                      ["WhatsApp name", state.session.pushName || "Not available"],
                      ["Engine", state.session.engine || "Not reported"],
                   ].map(([label, value]) => (
-                     <div key={label} className="rounded-xl border border-zinc-200 bg-white p-4">
-                        <strong className="block text-sm text-zinc-900">{label}</strong>
+                     <div key={label} className="rounded-xl border border-zinc-200 bg-white p-3 sm:p-4">
+                        <strong className="block text-xs font-semibold text-zinc-900 sm:text-sm">{label}</strong>
                         <p className="mt-1 break-words text-sm text-zinc-600">{value}</p>
                      </div>
                   ))}
                </div>
 
-               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
-                  <strong className="flex items-center gap-2"><AlertTriangle className="size-4" /> Changing number means logging out this WAHA session.</strong>
-                  <p className="mt-2">
+               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-950 sm:p-4">
+                  <strong className="flex items-start gap-2"><AlertTriangle className="mt-1 size-4 shrink-0" /> Changing number logs out this WAHA session.</strong>
+                  <p className="mt-1.5 sm:mt-2">
                      The old WhatsApp device link is removed. The new owner must scan the QR from WhatsApp → Linked devices.
                   </p>
                </div>
 
-               <div className="grid gap-3 sm:grid-cols-3">
-                  <Button type="button" variant="outline" disabled={busyAction !== null} onClick={() => refresh(true)}>
+               <div className="grid gap-2 sm:grid-cols-3 sm:gap-3">
+                  <Button type="button" variant="outline" className="w-full" disabled={busyAction !== null} onClick={() => refresh(true)}>
                      {busyAction === "refresh" ? <Loader2 className="animate-spin" /> : <RefreshCcw />}
                      Refresh
                   </Button>
-                  <Button type="button" variant="outline" disabled={busyAction !== null} onClick={() => runAction("start")}>
+                  <Button type="button" variant="outline" className="w-full" disabled={busyAction !== null} onClick={() => runAction("start")}>
                      {busyAction === "start" ? <Loader2 className="animate-spin" /> : <QrCode />}
                      Start / QR
                   </Button>
-                  <Button type="button" variant="outline" disabled={busyAction !== null} onClick={() => runAction("restart")}>
+                  <Button type="button" variant="outline" className="w-full" disabled={busyAction !== null} onClick={() => runAction("restart")}>
                      {busyAction === "restart" ? <Loader2 className="animate-spin" /> : <RotateCcw />}
                      Restart
                   </Button>
                </div>
 
-               <div className="rounded-2xl border border-red-200 bg-red-50 p-4">
+               <div className="rounded-2xl border border-red-200 bg-red-50 p-3 sm:p-4">
                   <label htmlFor="disconnect-confirm" className="text-sm font-semibold text-red-950">
                      To connect a different number, type <span className="font-mono">disconnect</span>
                   </label>
@@ -189,13 +189,13 @@ export function WhatsappSessionManager({ initialState }: { initialState: Whatsap
          </Card>
 
          <Card className="text-black dark:text-black">
-            <CardHeader>
-               <CardTitle className="flex items-center gap-2"><Smartphone className="size-5" /> Pair new phone</CardTitle>
+            <CardHeader className="p-4 sm:p-6">
+               <CardTitle className="flex items-center gap-2 text-base leading-6 sm:text-lg"><Smartphone className="size-5" /> Pair new phone</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
                {showQr ? (
                   <div className="space-y-4">
-                     <div className="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm">
+                     <div className="rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm sm:p-4">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={state.qr.image!} alt="WhatsApp pairing QR code" className="mx-auto aspect-square w-full max-w-72 rounded-2xl object-contain" />
                      </div>
@@ -204,9 +204,9 @@ export function WhatsappSessionManager({ initialState }: { initialState: Whatsap
                      </p>
                   </div>
                ) : (
-                  <div className="rounded-2xl border border-dashed border-zinc-300 p-6 text-center">
-                     <QrCode className="mx-auto size-10 text-zinc-400" />
-                     <p className="mt-3 text-sm font-semibold text-zinc-900">
+                  <div className="rounded-2xl border border-dashed border-zinc-300 p-4 text-center sm:p-6">
+                     <QrCode className="mx-auto size-8 text-zinc-400 sm:size-10" />
+                     <p className="mt-2 text-sm font-semibold text-zinc-900 sm:mt-3">
                         {working ? "Connected. QR is hidden." : "QR not ready yet."}
                      </p>
                      <p className="mt-2 text-sm leading-6 text-zinc-500">

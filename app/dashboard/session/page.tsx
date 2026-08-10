@@ -14,8 +14,8 @@ export default async function SessionPage() {
    const connectionState = connectionResult.status === "fulfilled" ? connectionResult.value as WhatsappConnectionState : null;
 
    return (
-      <DashboardLayout>
-         <div className="space-y-6">
+      <DashboardLayout hideHelperChat>
+         <div className="space-y-4 sm:space-y-6">
             <Heading
                title="WhatsApp Connection"
                description="WhatsApp pairing, message delivery, automation readiness, and connection health."
@@ -37,10 +37,10 @@ export default async function SessionPage() {
                </Card>
             )}
             <Card className="text-black dark:text-black">
-               <CardHeader>
+               <CardHeader className="p-4 sm:p-6">
                   <CardTitle>Connection facts</CardTitle>
                </CardHeader>
-               <CardContent className="grid gap-3 md:grid-cols-2">
+               <CardContent className="grid gap-2 p-4 pt-0 sm:gap-3 sm:p-6 sm:pt-0 md:grid-cols-2">
                   {[
                      ["Connection status", connectionState?.session.status || "Unavailable"],
                      ["Connection session", connectionState?.session.name || "Unavailable"],
@@ -49,9 +49,9 @@ export default async function SessionPage() {
                      ["WAHA engine", connectionState?.session.engine || "Not reported"],
                      ["Last checked", connectionState?.updatedAt ? new Date(connectionState.updatedAt).toLocaleString() : "Not checked"],
                   ].map(([label, value]) => (
-                     <div key={label} className="rounded-xl border p-4">
-                        <strong className="block">{label}</strong>
-                        <p className="mt-1 text-sm text-zinc-600">{value}</p>
+                     <div key={label} className="rounded-xl border p-3 sm:p-4">
+                        <strong className="block text-sm">{label}</strong>
+                        <p className="mt-1 break-words text-sm text-zinc-600">{value}</p>
                      </div>
                   ))}
                </CardContent>

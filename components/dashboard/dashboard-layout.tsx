@@ -12,9 +12,11 @@ import { HelperChat } from "@/components/helper-chat/helper-chat";
 export function DashboardLayout({
    children,
    sidebar,
+   hideHelperChat = false,
 }: {
    children: React.ReactNode;
    sidebar?: React.ReactNode;
+   hideHelperChat?: boolean;
 }) {
    const [sidebarOpen, setSidebarOpen] = React.useState(false);
    const [collapsed, setCollapsed] = React.useState(false);
@@ -83,7 +85,7 @@ export function DashboardLayout({
                {children}
                <div className="h-4" />
                {/* Helper side chat on all dashboard pages */}
-               <HelperChat />
+               {hideHelperChat ? null : <HelperChat />}
             </main>
          </div>
 
