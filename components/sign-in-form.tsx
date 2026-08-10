@@ -66,6 +66,7 @@ export function SignInForm({
          }
          
          const redirectPath = getSafeRedirectPath();
+         window.sessionStorage.setItem("appbase-dashboard-intro-pending-v1", "true");
          router.push(redirectPath);
       } catch (error) {
          console.error("Sign in error:", error);

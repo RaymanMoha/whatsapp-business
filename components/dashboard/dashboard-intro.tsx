@@ -1,9 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { X } from "lucide-react";
+import { Volume2, X } from "lucide-react";
 
-const INTRO_SEEN_KEY = "appbase-dashboard-intro-seen-v1";
+const INTRO_PENDING_KEY = "appbase-dashboard-intro-pending-v1";
 
 type IntroAsset = {
    poster: string;
@@ -24,15 +24,16 @@ export function DashboardIntro() {
    const [visible, setVisible] = React.useState(false);
    const [asset, setAsset] = React.useState<IntroAsset | null>(null);
    const [videoReady, setVideoReady] = React.useState(false);
+   const [soundEnabled, setSoundEnabled] = React.useState(false);
 
    const dismiss = React.useCallback(() => {
-      window.sessionStorage.setItem(INTRO_SEEN_KEY, "true");
+      window.sessionStorage.removeItem(INTRO_PENDING_KEY);
       setVisible(false);
    }, []);
 
    React.useEffect(() => {
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-      if (window.sessionStorage.getItem(INTRO_SEEN_KEY) === "true") return;
+      if (window.sessionStorage.getItem(INTRO_PENDING_KEY) !== "true") return;
       setAsset(window.matchMedia("(max-width: 767px)").matches ? MOBILE_INTRO : DESKTOP_INTRO);
       setVisible(true);
    }, []);
@@ -50,6 +51,19 @@ export function DashboardIntro() {
       return () => window.clearTimeout(timeout);
    }, [asset, dismiss, visible]);
 
+   const playWithSound = React.useCallback(() => {
+      const video = videoRef.current;
+      if (!video) return;
+      video.currentTime = 0;
+      video.muted = false;
+      video.volume = 1;
+      setSoundEnabled(true);
+      setVideoReady(true);
+      void video.play().catch(() => {
+         setSoundEnabled(false);
+      });
+   }, []);
+
    if (!visible || !asset) return null;
 
    return (
@@ -62,7 +76,7 @@ export function DashboardIntro() {
             ref={videoRef}
             className={`h-full w-full object-contain transition-opacity duration-300 ${videoReady ? "opacity-100" : "opacity-0"}`}
             autoPlay
-            muted
+            muted={!soundEnabled}
             playsInline
             preload="auto"
             poster={asset.poster}
@@ -73,6 +87,16 @@ export function DashboardIntro() {
             }}
             src={asset.video}
          />
+         {soundEnabled ? null : (
+            <button
+               type="button"
+               onClick={playWithSound}
+               className="absolute left-1/2 top-1/2 inline-flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full bg-emerald-700 px-5 py-3 text-sm font-semibold text-white shadow-xl transition hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-900 focus:ring-offset-2 sm:px-6 sm:text-base"
+               aria-label="Play dashboard opening animation with sound">
+               <Volume2 className="size-5" aria-hidden />
+               Play with sound
+            </button>
+         )}
          <button
             type="button"
             onClick={dismiss}
