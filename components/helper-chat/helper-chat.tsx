@@ -154,7 +154,7 @@ export function HelperChat() {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="fixed bottom-6 right-6 z-40">
+              <div className="fixed bottom-4 right-4 z-40 sm:bottom-6 sm:right-6">
                 {/* Animated wave rings */}
                 <div className="absolute inset-0 rounded-full">
                   <div className="absolute inset-0 rounded-full bg-[#E0B5FF]/30 animate-ping animation-delay-0"></div>
@@ -185,7 +185,7 @@ export function HelperChat() {
             `absolute inset-0 bg-black/30 ${open ? 'animate-overlay-fade-in' : 'animate-overlay-fade-out'}`
           } onClick={() => closePanel()} aria-hidden />
           <aside className={
-            `absolute bottom-6 right-6 h-[70vh] w-[92vw] sm:w-[420px] bg-white text-black shadow-2xl flex flex-col ${open ? 'animate-helper-slide-in' : 'animate-helper-slide-out'} rounded-2xl overflow-hidden`
+            `absolute inset-x-3 bottom-3 h-[min(78svh,680px)] max-h-[calc(100svh-1.5rem)] bg-white text-black shadow-2xl flex flex-col ${open ? 'animate-helper-slide-in' : 'animate-helper-slide-out'} rounded-2xl overflow-hidden sm:inset-x-auto sm:bottom-6 sm:right-6 sm:w-[420px]`
           }>
             <div className="absolute inset-0 pointer-events-none opacity-80">
               <Image src={ParternBg.src} alt="" fill className="object-cover" sizes="(max-width: 640px) 92vw, 420px" />
@@ -221,7 +221,7 @@ export function HelperChat() {
                 </div>
               </ScrollArea>
             </div>
-            <div className="relative z-10 border-t p-2 flex items-center gap-2 bg-white/70 backdrop-blur-sm">
+            <div className="relative z-10 flex items-center gap-2 border-t bg-white/70 p-2 backdrop-blur-sm">
               <Input
                 value={text}
                 onChange={(e) => setText(e.target.value)}
@@ -230,7 +230,7 @@ export function HelperChat() {
                 className="flex-1"
                 autoFocus
               />
-              <Button onClick={() => send()} aria-label="Send">Send</Button>
+              <Button onClick={() => send()} aria-label="Send" className="shrink-0">Send</Button>
             </div>
           </aside>
         </div>

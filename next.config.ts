@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["exceljs"],
+  images: {
+    qualities: [90],
+  },
   async headers() {
     return [
       {

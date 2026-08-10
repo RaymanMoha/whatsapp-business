@@ -77,7 +77,7 @@ export function SignInForm({
 
    return (
       <div
-         className="rounded-2xl p-8 border border-zinc-800 relative overflow-hidden"
+         className="rounded-2xl border border-zinc-800 p-6 sm:p-8 relative overflow-hidden"
          style={{
             backgroundColor: "rgba(255, 255, 255, 0.10)",
          }}>
@@ -165,11 +165,11 @@ export function SignInForm({
 
          <div className="relative z-10 mt-6 text-center border-t border-zinc-500 pt-6">
             <p className="text-white text-sm">
-               Don&apos;t have an account?{" "}
+               Need dashboard access?{" "}
                <Link
-                  href="/"
+                  href="https://wa.me/254703757813?text=Hi%20AppBase%2C%20I%20need%20dashboard%20access."
                   className="text-emerald-600 hover:text-white transition-colors underline">
-                  Sign Up
+                  Contact AppBase
                </Link>
             </p>
          </div>

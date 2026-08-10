@@ -194,10 +194,10 @@ function OrderTimeline({ order, saving, onMove }: { order: Order; saving: boolea
 
 function DetailRow({ icon: Icon, label, value }: { icon: typeof CalendarDays; label: string; value: React.ReactNode }) {
    return (
-      <div className="grid grid-cols-[22px_100px_minmax(0,1fr)] items-start gap-2 py-3 text-sm">
+      <div className="grid grid-cols-[22px_minmax(72px,100px)_minmax(0,1fr)] items-start gap-2 py-3 text-sm">
          <Icon className="mt-0.5 size-4 text-zinc-400" />
          <span className="text-zinc-500">{label}</span>
-         <span className="text-right font-medium text-zinc-900">{value}</span>
+         <span className="break-words text-right font-medium text-zinc-900">{value}</span>
       </div>
    );
 }
@@ -331,8 +331,8 @@ export function LiveOrders({ initialOrders = [] }: { initialOrders?: Order[] }) 
    return (
       <div className="space-y-4">
          {notice ? <p role="status" className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">{notice}</p> : null}
-         <section className="grid min-h-[690px] overflow-hidden rounded-[28px] border border-zinc-200 bg-white shadow-[0_22px_70px_rgba(0,0,0,.07)] xl:grid-cols-[330px_minmax(0,1fr)]">
-            <aside className="order-2 border-t border-zinc-200 bg-white xl:order-1 xl:border-b-0 xl:border-l-0 xl:border-r xl:border-t-0">
+         <section className="grid min-h-[690px] overflow-hidden rounded-[20px] border border-zinc-200 bg-white shadow-[0_22px_70px_rgba(0,0,0,.07)] sm:rounded-[28px] xl:grid-cols-[330px_minmax(0,1fr)]">
+            <aside className="order-1 border-b border-zinc-200 bg-white xl:border-b-0 xl:border-l-0 xl:border-r">
                <div className="border-b border-zinc-200 p-4">
                   <div className="flex gap-2">
                      <label className="relative flex-1">
@@ -359,19 +359,19 @@ export function LiveOrders({ initialOrders = [] }: { initialOrders?: Order[] }) 
             </aside>
 
             {selectedOrder ? (
-               <div className="order-1 min-w-0 animate-in fade-in duration-300 xl:order-2" key={selectedOrder.id}>
+               <div className="order-2 min-w-0 animate-in fade-in duration-300" key={selectedOrder.id}>
                   <header className="grid gap-5 border-b border-zinc-200 px-6 py-5 md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-center">
                      <div className="min-w-0">
                         <h2 className="truncate text-xl font-semibold tracking-tight text-zinc-950">{selectedOrder.orderNumber}</h2>
                         <p className="mt-1 flex items-center gap-2 text-xs text-zinc-500"><MessageCircleMore className="size-4 text-emerald-600" />WhatsApp · {shortDate(selectedOrder.createdAt)}</p>
                      </div>
-                     <div className="flex gap-8">
+                     <div className="grid grid-cols-2 gap-4 sm:flex sm:gap-8">
                         <div><span className="block text-xs text-zinc-400">Customer</span><strong className="mt-1 block max-w-40 truncate text-sm text-zinc-900">{selectedOrder.customerName}</strong></div>
                         <div><span className="block text-xs text-zinc-400">Total</span><strong className="mt-1 block text-base text-emerald-800">{money(selectedOrder.amount)}</strong></div>
                      </div>
                      <span className={`inline-flex w-fit items-center rounded-full border px-3 py-1.5 text-xs font-semibold ${statusClasses(selectedOrder.status)}`}>{selectedOrder.status}</span>
                   </header>
-                  <div className="grid lg:grid-cols-[minmax(360px,1fr)_340px]">
+                  <div className="grid lg:grid-cols-[minmax(0,1fr)_340px]">
                      <OrderTimeline order={selectedOrder} saving={savingId === selectedOrder.id} onMove={(status) => moveOrder(selectedOrder, status)} />
                      <OrderDetails order={selectedOrder} />
                   </div>

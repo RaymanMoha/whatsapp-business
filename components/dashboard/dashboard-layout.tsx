@@ -36,8 +36,8 @@ export function DashboardLayout({
       <div
          className={
             collapsed
-               ? "grid min-h-screen md:grid-cols-[4rem_1fr] bg-primary relative"
-               : "grid min-h-screen md:grid-cols-[18rem_1fr] bg-primary relative"
+               ? "grid min-h-svh md:grid-cols-[4rem_1fr] bg-primary relative"
+               : "grid min-h-svh md:grid-cols-[18rem_1fr] bg-primary relative"
          }>
          <Image
                src={ParternBg.src}
@@ -51,8 +51,8 @@ export function DashboardLayout({
          {/* Static sidebar on md+ */}
          <div className="hidden md:block">{sidebarNode}</div>
 
-         <div className="min-w-0 p-2">
-            <main className="relative flex h-full min-w-0 flex-col gap-4 overflow-x-hidden overflow-y-auto rounded-[15px] bg-white p-5 pt-20 text-black dark:text-black sm:p-8 sm:px-12 md:pt-8">
+         <div className="min-w-0 p-1.5 sm:p-2">
+            <main className="relative flex min-h-[calc(100svh-0.75rem)] min-w-0 flex-col gap-4 overflow-x-hidden overflow-y-auto rounded-xl bg-white p-4 pb-24 pt-20 text-black dark:text-black sm:min-h-[calc(100svh-1rem)] sm:rounded-[15px] sm:p-8 sm:px-12 md:pb-8 md:pt-8">
                <Image
                   src={ParternBg.src}
                   alt=""

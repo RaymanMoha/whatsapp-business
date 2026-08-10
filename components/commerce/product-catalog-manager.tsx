@@ -413,20 +413,20 @@ export function ProductCatalogManager({
       <section className="overflow-hidden rounded-[28px] border border-emerald-950/10 bg-white/80 shadow-[0_24px_70px_rgba(0,63,55,.08)]">
          <div className="border-b border-zinc-200 px-5 py-5 sm:px-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
-               <div>
+               <div className="min-w-0">
                   <h2 className="font-semibold">Available products</h2>
                   <p className="mt-2 text-sm text-zinc-500">
                      {uploadedImageCount}/{products.length} products have pictures. The bot can only send pictures for products with uploaded images.
                   </p>
                </div>
-               <div className="flex flex-wrap items-center gap-2">
-                  <Button type="button" size="sm" onClick={() => setAddOpen(true)} className="rounded-lg bg-emerald-700 text-white hover:bg-emerald-800">
+               <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-3">
+                  <Button type="button" size="sm" onClick={() => setAddOpen(true)} className="w-full rounded-lg bg-emerald-700 text-white hover:bg-emerald-800">
                      <Plus className="mr-2 size-4" />Add product
                   </Button>
-                  <Button type="button" variant="outline" size="sm" onClick={downloadTemplate} className="rounded-lg !bg-white !text-zinc-900 hover:!bg-zinc-50">
+                  <Button type="button" variant="outline" size="sm" onClick={downloadTemplate} className="w-full rounded-lg !bg-white !text-zinc-900 hover:!bg-zinc-50">
                      <Download className="mr-2 size-4" />Template
                   </Button>
-                  <Button type="button" size="sm" onClick={() => setImportOpen((open) => !open)} className="rounded-lg">
+                  <Button type="button" size="sm" onClick={() => setImportOpen((open) => !open)} className="w-full rounded-lg">
                      <Upload className="mr-2 size-4" />Import catalog
                   </Button>
                </div>
@@ -505,8 +505,8 @@ export function ProductCatalogManager({
             <div className="grid gap-4 lg:grid-cols-2">
                {filteredProducts.map((product) => (
                   <div key={product.id} className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white transition hover:border-emerald-300 hover:shadow-[0_14px_35px_rgba(0,63,55,.08)]">
-                     <div className="grid grid-cols-[112px_minmax(0,1fr)] gap-4 p-4">
-                        <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-2xl bg-zinc-100">
+                     <div className="grid gap-4 p-4 sm:grid-cols-[112px_minmax(0,1fr)]">
+                        <div className="flex aspect-square w-full max-w-32 items-center justify-center overflow-hidden rounded-2xl bg-zinc-100 sm:h-28 sm:w-28">
                            {product.imageDataUrl ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
@@ -534,12 +534,12 @@ export function ProductCatalogManager({
                               </span>
                            </div>
                            {promotionsForProduct(product).length ? <div className="mt-2 flex flex-wrap gap-1.5">{promotionsForProduct(product).slice(0, 2).map((promotion) => <span key={promotion.id} className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-1 text-[10px] font-semibold text-violet-700"><BadgePercent className="size-3" />{promotion.name}</span>)}</div> : null}
-                           <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-zinc-500">
+                           <div className="mt-3 grid grid-cols-1 gap-1.5 text-xs text-zinc-500 min-[420px]:grid-cols-3 min-[420px]:gap-2">
                               <span>{product.category}</span>
                               <span className={product.stock === 0 ? "font-semibold text-red-600" : product.stock <= 5 ? "font-semibold text-amber-700" : "text-emerald-700"}>{product.stock === 0 ? "Out of stock" : product.stock <= 5 ? `${product.stock} low stock` : `${product.stock} in stock`}</span>
                               <span>{formatPrice(product.price)}</span>
                            </div>
-                           <div className="mt-4 flex flex-wrap items-center gap-2">
+                           <div className="mt-4 grid grid-cols-1 gap-2 min-[420px]:grid-cols-2 lg:flex lg:flex-wrap lg:items-center">
                               <Button
                                  type="button"
                                  variant="outline"
