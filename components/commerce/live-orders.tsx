@@ -69,11 +69,21 @@ function money(value: number) {
 }
 
 function shortDate(value: string) {
-   return new Intl.DateTimeFormat("en-KE", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(value));
+   return new Intl.DateTimeFormat("en-KE", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      timeZone: "Africa/Nairobi",
+   }).format(new Date(value));
 }
 
 function timeOnly(value: string) {
-   return new Intl.DateTimeFormat("en-KE", { hour: "numeric", minute: "2-digit" }).format(new Date(value));
+   return new Intl.DateTimeFormat("en-KE", {
+      hour: "numeric",
+      minute: "2-digit",
+      timeZone: "Africa/Nairobi",
+   }).format(new Date(value));
 }
 
 function statusClasses(status: string) {
