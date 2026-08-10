@@ -43,6 +43,7 @@ export function DashboardLayout({
                src={ParternBg.src}
                alt=""
                fill
+               priority
                className="absolute inset-0 w-full h-full object-cover pointer-events-none"
             style={{ zIndex: 0, objectFit: "cover", opacity: 0.8 }}
             sizes="100vw"
@@ -57,6 +58,7 @@ export function DashboardLayout({
                   src={ParternBg.src}
                   alt=""
                   fill
+                  priority
                   className="absolute inset-0 w-full h-full object-cover pointer-events-none"
                   style={{ zIndex: 0, objectFit: "cover", opacity: 0.8 }}
                   sizes="(max-width: 768px) 100vw, calc(100vw - 18rem)"
