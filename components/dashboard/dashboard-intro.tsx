@@ -11,12 +11,12 @@ type IntroAsset = {
 };
 
 const DESKTOP_INTRO: IntroAsset = {
-   poster: "/dashboard/intro-desktop-poster.jpg",
-   video: "/dashboard/intro-desktop.mp4",
+   poster: "/dashboard-assets/intro-desktop-poster.jpg",
+   video: "/dashboard-assets/intro-desktop.mp4",
 };
 const MOBILE_INTRO: IntroAsset = {
-   poster: "/dashboard/intro-mobile-poster.jpg",
-   video: "/dashboard/intro-mobile.mp4",
+   poster: "/dashboard-assets/intro-mobile-poster.jpg",
+   video: "/dashboard-assets/intro-mobile.mp4",
 };
 
 export function DashboardIntro() {
