@@ -52,7 +52,7 @@ app.use(express.json({
 const config = {
   port: Number(process.env.PORT || 8080),
   groqApiKey: process.env.GROQ_API_KEY,
-  groqModel: process.env.GROQ_MODEL || 'llama-3.1-8b-instant',
+  groqModel: process.env.GROQ_MODEL || 'openai/gpt-oss-20b',
   wahaBaseUrl: process.env.WAHA_BASE_URL || 'http://localhost:3001',
   wahaApiKey: process.env.WAHA_API_KEY || 'change-this-local-api-key',
   wahaSession: process.env.WAHA_SESSION || 'default',

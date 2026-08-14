@@ -46,7 +46,7 @@ function environmentDefaults() {
     handoffMessage:
       process.env.HUMAN_HANDOFF_MESSAGE ||
       'I do not have confirmed information for that. Please contact a team member for help.',
-    groqModel: process.env.GROQ_MODEL || 'llama-3.1-8b-instant',
+    groqModel: process.env.GROQ_MODEL || 'openai/gpt-oss-20b',
     groqApiKey: process.env.GROQ_API_KEY || '',
     wahaBaseUrl: process.env.WAHA_BASE_URL || 'http://localhost:3001',
     wahaApiKey: process.env.WAHA_API_KEY || '',
