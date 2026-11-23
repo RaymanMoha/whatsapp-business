@@ -1,3 +1,4 @@
+import { money } from './shopping-ui.js'
 import { getRuntimeSettings } from './settings-store.js'
 
 export async function getWahaConfig() {
@@ -83,7 +84,7 @@ export async function sendWahaImage(chatId, product, session) {
         data: product.image.data,
         filename: product.image.filename || `${product.id}.jpg`,
       },
-      caption: `${product.name}\nKES ${product.price}\n${product.available ? `${product.stock} in stock` : 'Sold out'}`,
+      caption: `*${product.name}*\n${money(product.price)}\n${product.available && Number(product.stock) > 0 ? `${product.stock} in stock` : 'Sold out'}\n\n${product.available && Number(product.stock) > 0 ? `Reply "add ${product.name} to cart" to add one.` : 'Reply *browse* to see other products.'}\nType *cart* to view your items.`,
     }),
   }).finally(() => clearTimeout(timeout))
 

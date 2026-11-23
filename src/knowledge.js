@@ -1,3 +1,5 @@
+import { demoProfile, demoKnowledge } from './demo-profile.js'
+
 export const businessProfile = {
   name: 'Your Business',
   description:
@@ -8,7 +10,7 @@ export const businessProfile = {
     'If the answer is not in the approved information, say you do not have confirmed information and ask the customer to contact the team.',
 }
 
-export const approvedKnowledge = [
+const defaultKnowledge = [
   {
     topic: 'Opening hours',
     content: 'The restaurant is open Monday to Saturday from 9:00 AM to 9:00 PM. It is closed on Sunday.',
@@ -30,3 +32,5 @@ export const approvedKnowledge = [
     content: 'Delivery availability depends on the customer location. Ask for the delivery area and pass unclear cases to a human.',
   },
 ]
+
+export const approvedKnowledge = demoProfile ? demoKnowledge : defaultKnowledge

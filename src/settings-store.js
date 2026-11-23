@@ -1,3 +1,4 @@
+import { demoProfile } from './demo-profile.js'
 import crypto from 'node:crypto'
 import { getMongoDb, isMongoConfigured } from './mongodb.js'
 
@@ -37,10 +38,10 @@ let runtimeCacheExpiresAt = 0
 
 function environmentDefaults() {
   return {
-    businessName: process.env.BUSINESS_NAME || 'WhatsApp Store',
-    botName: process.env.BOT_NAME || 'Ask Local',
+    businessName: demoProfile?.businessName || process.env.BUSINESS_NAME || 'WhatsApp Store',
+    botName: demoProfile?.botName || process.env.BOT_NAME || 'Ask Local',
     handoffMessage:
-      process.env.HUMAN_HANDOFF_MESSAGE ||
+      demoProfile?.handoffMessage || process.env.HUMAN_HANDOFF_MESSAGE ||
       'I do not have confirmed information for that. Please contact a team member for help.',
     groqModel: process.env.GROQ_MODEL || 'llama-3.1-8b-instant',
     groqApiKey: process.env.GROQ_API_KEY || '',

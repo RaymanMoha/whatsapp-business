@@ -131,8 +131,8 @@ export function formatCartSummary(items, heading = 'Your cart') {
     (item) => `${item.quantity} x ${item.name} — KES ${item.lineTotal}`,
   )
   return [
-    `${heading}:`,
+    `🛒 *${heading}*`,
     ...lines,
-    `Total: KES ${getCartTotal(items)}`,
+    `*Total: KES ${getCartTotal(items)}*`,
   ].join('\n')
 }

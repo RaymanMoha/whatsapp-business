@@ -11,7 +11,8 @@
     "bot:dev": "node --watch src/server.js",
     "bot:start": "node src/server.js",
     "check": "node --check src/server.js && node --check src/auth-password.js && node --check src/auth-attempt-store.js && node --check src/webhook-auth.js && node --check src/cart.js && node --check src/cart-store.js && node --check src/settings-store.js && node --check src/knowledge.js && node --check src/knowledge-store.js && node --check src/catalog.js && node --check src/catalog-import.js && node --check src/payment-status.js && node --check src/message-queue.js && node --check src/order-store.js && node --check src/receipt.js && node --check src/receipt-store.js && npx tsc --noEmit",
-    "test": "node --test src/*.test.js"
+    "test": "node --test src/*.test.js",
+    "demo:seed": "node scripts/seed-demo.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",

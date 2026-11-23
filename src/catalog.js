@@ -1,4 +1,7 @@
-export const products = [
+import { demoProfile } from './demo-profile.js'
+import { demoProducts } from './demo-products.js'
+
+const defaultProducts = [
   {
     id: 'almonds-500g',
     name: 'California Almonds 500g',
@@ -55,3 +58,5 @@ export const products = [
     emoji: '🕯️',
   },
 ]
+
+export const products = demoProfile ? demoProducts : defaultProducts

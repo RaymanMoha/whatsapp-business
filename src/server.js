@@ -1,6 +1,8 @@
 import 'dotenv/config'
+import { demoProfile } from './demo-profile.js'
 
 import express from 'express'
+import { shoppingAction, welcomeMenu, catalogPage, productCard, matchPhotoProducts } from './shopping-ui.js'
 import {
   addCartItems,
   extractCartQuantity,
@@ -61,6 +63,7 @@ const config = {
 const conversations = new Map()
 const pendingProducts = new Map()
 const pendingPayments = new Map()
+const shoppingCatalogs = new Map()
 const workerId = `bot-${process.pid}`
 let workerBusy = false
 
@@ -114,15 +117,9 @@ async function processIncomingMessage(incoming) {
     status: 'received',
   })
   const products = await readProducts()
-  const cartReply = await buildCartReply(incoming, products)
-  const paymentReply = cartReply ? null : await buildPaymentReply(incoming, products)
-  const commerceReply = cartReply || paymentReply
-  const reply = commerceReply || await buildReply(incoming, products)
+  const { reply, imageProducts } = await buildCustomerReply(incoming, products)
   await sendWhatsAppText(incoming.chatId, reply, incoming.session)
-  if (!commerceReply) {
-    await sendRelevantProductImages(incoming, products)
-    rememberPendingProduct(incoming.chatId, incoming.text, products)
-  }
+  await sendRelevantProductImages(incoming, imageProducts)
   await appendConversationEvent({
     id: `${incoming.id}-reply`,
     chatId: incoming.chatId,
@@ -211,15 +208,11 @@ app.post('/test/reply', async (request, response) => {
     text: message,
     fromMe: false,
   }
-  const cartReply = await buildCartReply(incoming, products)
-  const paymentReply = cartReply ? null : await buildPaymentReply(incoming, products)
-  const commerceReply = cartReply || paymentReply
-  const reply = commerceReply || await buildReply(incoming, products)
-  if (!commerceReply) rememberPendingProduct(chatId, message, products)
+  const { reply, imageProducts } = await buildCustomerReply(incoming, products)
 
   response.json({
     reply,
-    productImages: findProductsForMessage(products, message).filter((product) => product.image?.data).length,
+    productImages: imageProducts.filter((product) => product.image?.data && product.image?.mimetype).slice(0, 3).length,
   })
 })
 
@@ -258,6 +251,68 @@ function extractIncomingMessage(body) {
   }
 }
 
+async function buildCustomerReply(incoming, products) {
+  const action = shoppingAction(incoming.text)
+  if (action?.type === 'menu') {
+    const runtime = await getRuntimeSettings()
+    return { reply: welcomeMenu(runtime.businessName), imageProducts: [] }
+  }
+  if (action?.type === 'photos') {
+    const matches = matchPhotoProducts(products, action.query)
+    const imageProducts = matches.filter((product) => product.image?.data && product.image?.mimetype).slice(0, 3)
+    const reply = imageProducts.length
+      ? `📸 *Product photos*\n\n${imageProducts.map((product) => product.name).join('\n')}\n\nReply *browse* for the full catalog, or ask for photos of a product by name.`
+      : action.query && !matches.length
+        ? 'I could not find that product. Reply *browse* to see the catalog.'
+        : 'Photos are not available for these products yet. You can still reply *browse* for prices and availability.'
+    return { reply, imageProducts }
+  }
+  if (action?.type === 'browse' || action?.type === 'more') {
+    let catalog = shoppingCatalogs.get(incoming.chatId)
+    if (action.type === 'browse' || !catalog) {
+      catalog = { ids: products.map((product) => product.id), page: 0 }
+    } else if ((catalog.page + 1) * 5 < catalog.ids.length) {
+      catalog.page += 1
+    }
+    // Keep codes tied to the catalog the customer saw, even if products reorder.
+    shoppingCatalogs.delete(incoming.chatId)
+    shoppingCatalogs.set(incoming.chatId, catalog)
+    if (shoppingCatalogs.size > 1000) shoppingCatalogs.delete(shoppingCatalogs.keys().next().value)
+    const entries = catalog.ids.map((id) => products.find((product) => product.id === id) || { name: 'Product no longer available', available: false })
+    const imageProducts = entries.slice(catalog.page * 5, catalog.page * 5 + 5)
+      .filter((product) => product.image?.data && product.image?.mimetype).slice(0, 3)
+    const photoNote = imageProducts.length ? '\n\nPhotos for up to 3 products follow. Use a product code for its details and photo.' : '\n\nPhotos are not available for these products yet.'
+    return { reply: catalogPage(entries, catalog.page) + photoNote, imageProducts }
+  }
+  if (['product', 'add', 'remove'].includes(action?.type)) {
+    const catalog = shoppingCatalogs.get(incoming.chatId)
+    const id = catalog?.ids[action.index]
+    const product = id && products.find((product) => product.id === id)
+    if (!product) return { reply: 'That product code is not available. Reply *browse* for the current products.', imageProducts: [] }
+    if (action.type === 'product') {
+      pendingProducts.set(incoming.chatId, product)
+      return { reply: productCard(product, `P${action.index + 1}`), imageProducts: [product] }
+    }
+    incoming = { ...incoming, text: action.type === 'add' ? `add ${action.quantity} ${product.name} to cart` : `remove ${product.name} from cart`, selectedProductIds: [product.id] }
+  }
+  if (action?.type === 'cart') incoming = { ...incoming, text: 'show my cart' }
+  if (action?.type === 'track') {
+    const records = await buildPaymentContext(incoming.chatId)
+    return { reply: `📦 *Your recent order payments*\n\n${records}\n\nFor delivery updates, reply *4*.\n*menu* — Main menu`, imageProducts: [] }
+  }
+  if (action?.type === 'help') {
+    const runtime = await getRuntimeSettings()
+    return { reply: `*Help & contact*\n\n${runtime.handoffMessage}\n\nYou can also ask a question here, or reply *menu* to continue shopping.`, imageProducts: [] }
+  }
+  const cartReply = await buildCartReply(incoming, products)
+  const paymentReply = cartReply ? null : await buildPaymentReply(incoming, products)
+  const commerceReply = cartReply || paymentReply
+  if (commerceReply) return { reply: commerceReply, imageProducts: [] }
+  const reply = await buildReply(incoming, products)
+  rememberPendingProduct(incoming.chatId, incoming.text, products)
+  return { reply, imageProducts: findProductsForMessage(products, incoming.text) }
+}
+
 async function buildCartReply(incoming, products) {
   const chatId = incoming.chatId
   const currentCart = await getCart(chatId)
@@ -265,12 +320,12 @@ async function buildCartReply(incoming, products) {
   if (isClearCartIntent(incoming.text)) {
     await clearCart(chatId)
     pendingPayments.delete(chatId)
-    return 'Your cart is now empty. Ask me to show the available products whenever you are ready.'
+    return 'Your cart is now empty. Reply *browse* to keep shopping.'
   }
 
   if (isRemoveFromCartIntent(incoming.text)) {
-    const matched = matchCartProducts(products, incoming.text)
-    if (!currentCart.length) return 'Your cart is empty.'
+    const matched = incoming.selectedProductIds ? products.filter((product) => incoming.selectedProductIds.includes(product.id)) : matchCartProducts(products, incoming.text)
+    if (!currentCart.length) return 'Your cart is empty. Reply *browse* to see products.'
     if (!matched.length) {
       return `${formatCartSummary(currentCart)}\n\nTell me which product to remove, for example: "remove Green Tea from cart".`
     }
@@ -282,7 +337,7 @@ async function buildCartReply(incoming, products) {
       : 'Removed. Your cart is now empty.'
   }
 
-  const matchedSelection = matchCartProducts(products, incoming.text)
+  const matchedSelection = incoming.selectedProductIds ? products.filter((product) => incoming.selectedProductIds.includes(product.id)) : matchCartProducts(products, incoming.text)
   const explicitAdd = isAddToCartIntent(incoming.text)
   const implicitSelection = !explicitAdd && isProductSelectionIntent(incoming.text, matchedSelection)
 
@@ -313,21 +368,28 @@ async function buildCartReply(incoming, products) {
       messages.push(`Not added: ${unavailable.map((product) => `${product.name} is sold out`).join(', ')}.`)
     }
     if (nextCart.length) {
-      messages.push(formatCartSummary(nextCart), 'Reply "pay cart" when ready, or keep adding products.')
+      messages.push(formatCartSummary(nextCart), 'Reply *checkout* to pay, *browse* to keep shopping, or *remove PRODUCT NAME from cart* to remove an item.')
     }
     return messages.join('\n\n')
   }
 
   if (isViewCartIntent(incoming.text)) {
     return currentCart.length
-      ? `${formatCartSummary(currentCart)}\n\nReply "pay cart" to receive one M-Pesa prompt for the total.`
-      : 'Your cart is empty. Say "add Organic Honey to cart" to get started.'
+      ? `${formatCartSummary(currentCart)}\n\nReply *checkout* to request an M-Pesa prompt for this total.\n*clear cart* — Empty cart · *browse* — Keep shopping`
+      : 'Your cart is empty. Reply *browse*, then add a product using its code, for example *add P1*.'
   }
 
   return null
 }
 
 async function buildPaymentReply(incoming, products) {
+  if (demoProfile && (isPaymentIntent(incoming.text) || isPaymentConfirmationClaim(incoming.text))) {
+    const items = await getCart(incoming.chatId)
+    if (!items.length) return 'Your demo cart is empty. Reply *browse* to choose a product first.'
+    const { items: checked, issues } = revalidateCartItems(items, products)
+    if (issues.length) return `Please update your cart before checkout:\n${issues.join('\n')}\n\nReply *browse* to see current availability.`
+    return `${formatCartSummary(checked, 'Demo checkout')}\n\nDelivery is quoted separately after your area is confirmed.\n\n*This is a demo preview.* No payment request was sent, no money was charged, and no real order was placed.\n\n*menu* — Main menu · *clear cart* — Start again`
+  }
   if (isPaymentConfirmationClaim(incoming.text)) {
     const [latestPayment] = await listRecentPaymentsForChat(incoming.chatId).catch(() => [])
     if (
@@ -581,7 +643,7 @@ Rules:
 - Answer only from the approved information above.
 - For product questions, answer only from the approved product catalog above.
 - When an approved reply template fits the question, follow its wording and replace its variables with approved information.
-- Keep replies short enough for WhatsApp.
+- Keep replies short enough for WhatsApp: use short paragraphs, simple language, and one clear next action.\n- Customers can type menu to see options, browse to see products, and cart to see their cart. Do not invent buttons or claim a human has been notified.
 - If the user asks for private payment data, OTPs, PINs, passwords, or sensitive information, refuse and give a safe next step.
 - If the approved information does not answer the question, say: "${runtime.handoffMessage}"
 - Do not invent prices, availability, policies, addresses, links, or phone numbers.
@@ -590,7 +652,7 @@ Rules:
 }
 
 async function sendRelevantProductImages(incoming, products) {
-  const productsToSend = findProductsForMessage(products, incoming.text)
+  const productsToSend = products
     .filter((product) => product.image?.data && product.image?.mimetype)
     .slice(0, 3)
 
