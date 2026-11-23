@@ -46,6 +46,10 @@ export async function POST(request: NextRequest) {
          if (credentials.consumerSecret) overrides.mpesaConsumerSecret = String(credentials.consumerSecret).trim();
          if (credentials.environment) overrides.mpesaEnvironment = String(credentials.environment).trim();
       }
+      if (provider === "google") {
+         if (credentials.appsScriptUrl) overrides.googleAppsScriptUrl = String(credentials.appsScriptUrl).trim();
+         if (credentials.integrationSecret) overrides.googleIntegrationSecret = String(credentials.integrationSecret).trim();
+      }
 
       return NextResponse.json(await testRuntimeProvider(provider, overrides));
    } catch (error) {

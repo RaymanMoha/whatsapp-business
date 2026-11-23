@@ -8,14 +8,13 @@ Demo checkout shows the cart and a clear preview message. It does not initiate M
 
 ## Suggested walkthrough
 
-1. `hi` — welcome and navigation.
-2. `1` — products with photos.
-3. `P1` — product details.
-4. `add 2 P1` — quantity and cart.
-5. `more` — second catalog page.
-6. `show pics of Gucci Bloom` — a specific product photo.
-7. `2`, then `checkout` — demo checkout without charging money.
+1. `hi` — a short welcome and category suggestions.
+2. `fragrance` — browse the matching products and actual photos.
+3. `Gucci Bloom` — a single photo card with product details.
+4. `add two` — add the product in context, without product codes.
+5. `cart`, then `checkout` — a no-charge checkout preview.
+6. `show pics of Red Lipstick` — a specific product photo.
+7. `browse`, then `more` — continue discovering products.
 8. `What does delivery cost?` — approved demo policy.
-9. `4` — honest support information.
 
 Red Nail Polish is deliberately sold out to demonstrate availability handling. No fake customers, testimonials, payment confirmations or delivery events are seeded.

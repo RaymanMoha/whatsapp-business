@@ -12,6 +12,7 @@ const SECRET_KEYS = [
   'mpesaConsumerKey',
   'mpesaConsumerSecret',
   'mpesaPassKey',
+  'googleIntegrationSecret',
 ]
 
 const DASHBOARD_PUBLIC_KEYS = {
@@ -24,6 +25,8 @@ const DASHBOARD_PUBLIC_KEYS = {
   mpesaPartyA: 'mpesaPartyA',
   mpesaTransactionType: 'mpesaTransactionType',
   mpesaCallbackUrl: 'mpesaCallbackUrl',
+  googleSpreadsheetUrl: 'googleSpreadsheetUrl',
+  googleAppsScriptUrl: 'googleAppsScriptUrl',
 }
 
 const DASHBOARD_SECRET_KEYS = {
@@ -31,6 +34,7 @@ const DASHBOARD_SECRET_KEYS = {
   mpesaConsumerKey: 'mpesaConsumerKey',
   mpesaConsumerSecret: 'mpesaConsumerSecret',
   mpesaPassKey: 'mpesaPassKey',
+  googleIntegrationSecret: 'googleIntegrationSecret',
 }
 
 let runtimeCache = null
@@ -43,7 +47,7 @@ function environmentDefaults() {
     handoffMessage:
       demoProfile?.handoffMessage || process.env.HUMAN_HANDOFF_MESSAGE ||
       'I do not have confirmed information for that. Please contact a team member for help.',
-    groqModel: process.env.GROQ_MODEL || 'llama-3.1-8b-instant',
+    groqModel: process.env.GROQ_MODEL || 'openai/gpt-oss-20b',
     groqApiKey: process.env.GROQ_API_KEY || '',
     wahaBaseUrl: process.env.WAHA_BASE_URL || 'http://localhost:3001',
     wahaApiKey: process.env.WAHA_API_KEY || '',
@@ -56,6 +60,9 @@ function environmentDefaults() {
     mpesaPassKey: process.env.MPESA_PASSKEY || '',
     mpesaTransactionType: process.env.MPESA_TRANSACTION_TYPE || 'CustomerPayBillOnline',
     mpesaCallbackUrl: process.env.MPESA_CALLBACK_URL || '',
+    googleSpreadsheetUrl: process.env.GOOGLE_SPREADSHEET_URL || '',
+    googleAppsScriptUrl: process.env.GOOGLE_APPS_SCRIPT_URL || '',
+    googleIntegrationSecret: process.env.GOOGLE_INTEGRATION_SECRET || '',
   }
 }
 
@@ -189,9 +196,19 @@ export async function saveRuntimeSettings(input, updatedBy = 'dashboard admin') 
     throw new Error('M-Pesa environment must be sandbox or production')
   }
 
+  if (publicUpdates.googleSpreadsheetUrl && !/^https:\/\/docs\.google\.com\/spreadsheets\/d\//.test(publicUpdates.googleSpreadsheetUrl)) {
+    throw new Error('Use a valid Google Sheets URL')
+  }
+  if (publicUpdates.googleAppsScriptUrl && !/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(publicUpdates.googleAppsScriptUrl)) {
+    throw new Error('Use the /exec URL from an Apps Script web app deployment')
+  }
+
   for (const [dashboardKey, runtimeKey] of Object.entries(DASHBOARD_SECRET_KEYS)) {
     const value = String(secretInput[dashboardKey] || '').trim()
     if (!value) continue
+    if (dashboardKey === 'googleIntegrationSecret' && value.length < 32) {
+      throw new Error('The Google integration secret must be at least 32 characters')
+    }
     secretUpdates[runtimeKey] = encryptSecret(value)
     changedFields.push(dashboardKey)
   }
@@ -265,6 +282,31 @@ export async function testRuntimeProvider(provider, overrides = {}) {
     const payload = await response.json()
     if (!payload.access_token) throw new Error('M-Pesa did not return an access token')
     return { ok: true, message: `M-Pesa ${runtime.mpesaEnvironment} credentials verified` }
+  }
+
+  if (provider === 'google') {
+    if (!runtime.googleAppsScriptUrl) throw new Error('Add the Apps Script web app URL first')
+    if (!runtime.googleIntegrationSecret) throw new Error('Add the shared integration secret first')
+    let url
+    try {
+      url = new URL(runtime.googleAppsScriptUrl)
+    } catch {
+      throw new Error('The Apps Script web app URL is invalid')
+    }
+    if (url.protocol !== 'https:' || url.hostname !== 'script.google.com') {
+      throw new Error('Use the HTTPS web app URL from script.google.com')
+    }
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'ping', secret: runtime.googleIntegrationSecret }),
+      redirect: 'follow',
+      signal: AbortSignal.timeout(12000),
+    })
+    if (!response.ok) throw new Error(`Google connection failed (${response.status})`)
+    const payload = await response.json().catch(() => null)
+    if (!payload?.ok) throw new Error(payload?.error || 'The Apps Script endpoint did not confirm the connection')
+    return { ok: true, message: 'Google Sheets connection verified' }
   }
 
   throw new Error('Unknown provider')

@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import ParternBg from "@/public/pattern-bg.png";
 import Image from "next/image";
+import { BrandLogo } from "@/components/brand-logo";
 
 // Schema centralized in types/index.ts
 
@@ -65,6 +66,7 @@ export function SignInForm({
          }
          
          const redirectPath = getSafeRedirectPath();
+         window.sessionStorage.setItem("appbase-dashboard-intro-pending-v1", "true");
          router.push(redirectPath);
       } catch (error) {
          console.error("Sign in error:", error);
@@ -76,7 +78,7 @@ export function SignInForm({
 
    return (
       <div
-         className="rounded-2xl p-8 border border-zinc-800 relative overflow-hidden"
+         className="rounded-2xl border border-zinc-800 p-6 sm:p-8 relative overflow-hidden"
          style={{
             backgroundColor: "rgba(255, 255, 255, 0.10)",
          }}>
@@ -89,7 +91,13 @@ export function SignInForm({
             style={{ zIndex: 0, objectFit: "cover", opacity: 0.8 }}
             sizes="(max-width: 1024px) 100vw, 448px"
          />
-         <div className="mb-12 text-center">
+         <div className="relative z-10 mb-10 text-center">
+            <BrandLogo
+               variant="color"
+               priority
+               className="mx-auto mb-5 h-[76px] w-auto drop-shadow-[0_10px_26px_rgba(0,0,0,.35)]"
+               sizes="138px"
+            />
             <h1 className="text-white text-2xl font-semibold mb-2">
                Welcome back!
             </h1>
@@ -101,7 +109,7 @@ export function SignInForm({
          <Form {...form}>
             <form
                onSubmit={form.handleSubmit(handleSubmit)}
-               className="space-y-8 text-white">
+               className="relative z-10 space-y-8 text-white">
                <FormField
                   control={form.control}
                   name="email"
@@ -156,13 +164,13 @@ export function SignInForm({
             </form>
          </Form>
 
-         <div className="mt-6 text-center border-t border-zinc-500 pt-6">
+         <div className="relative z-10 mt-6 text-center border-t border-zinc-500 pt-6">
             <p className="text-white text-sm">
-               Don&apos;t have an account?{" "}
+               Need dashboard access?{" "}
                <Link
-                  href="/"
+                  href="https://wa.me/254703757813?text=Hi%20AppBase%2C%20I%20need%20dashboard%20access."
                   className="text-emerald-600 hover:text-white transition-colors underline">
-                  Sign Up
+                  Contact AppBase
                </Link>
             </p>
          </div>

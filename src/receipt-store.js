@@ -1,5 +1,5 @@
 import { getMongoDb, isMongoConfigured } from './mongodb.js'
-import { createReceiptPdf } from './receipt.js'
+import { createReceiptPdf, RECEIPT_TEMPLATE_VERSION } from './receipt.js'
 
 export async function getReceiptByPaymentId(paymentId) {
   if (!isMongoConfigured() || !paymentId) return null
@@ -13,7 +13,7 @@ export async function ensurePaymentReceipt(payment) {
   if (payment.status !== 'Paid') throw new Error('A receipt can only be created for a paid payment')
 
   const existing = await getReceiptByPaymentId(payment.id)
-  if (existing) return existing
+  if (existing?.templateVersion === RECEIPT_TEMPLATE_VERSION) return existing
 
   const pdf = await createReceiptPdf(payment)
   const now = new Date().toISOString()
@@ -28,15 +28,19 @@ export async function ensurePaymentReceipt(payment) {
     productName: payment.productName || payment.accountReference || 'WhatsApp order',
     lineItems: Array.isArray(payment.lineItems) ? payment.lineItems : [],
     itemCount: Number(payment.itemCount || 0),
-    createdAt: now,
+    subtotal: Number(payment.subtotal ?? payment.amount ?? 0),
+    discount: Number(payment.discount || 0),
+    promotion: payment.promotion || null,
+    templateVersion: RECEIPT_TEMPLATE_VERSION,
+    createdAt: existing?.createdAt || now,
     updatedAt: now,
-    sharedAt: null,
+    sharedAt: existing?.sharedAt || null,
   }
 
   const db = await getMongoDb()
   await db.collection('receipts').updateOne(
     { paymentId: payment.id },
-    { $setOnInsert: receipt },
+    { $set: receipt },
     { upsert: true },
   )
   return getReceiptByPaymentId(payment.id)

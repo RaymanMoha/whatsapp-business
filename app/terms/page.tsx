@@ -1,11 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
+import type { Metadata } from "next"
+
+export const metadata: Metadata = {
+  title: "Terms and Conditions",
+  description: "Terms governing access to and use of the AppBase WhatsApp commerce service.",
+  alternates: { canonical: "/terms" },
+}
 
 const sections = [
   {
     title: "Introduction",
     body:
-      "These Terms of Service (\"Terms\") govern your access to and use of Disruptor. By accessing or using the Service, you agree to be bound by these Terms.",
+      "These Terms of Service (\"Terms\") govern your access to and use of AppBase. By accessing or using the Service, you agree to be bound by these Terms.",
   },
   {
     title: "Use of Service",
@@ -35,7 +42,7 @@ const sections = [
   {
     title: "Limitation of Liability",
     body:
-      "To the maximum extent permitted by law, Disruptor will not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues.",
+      "To the maximum extent permitted by law, AppBase will not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues.",
   },
   {
     title: "Governing Law",
@@ -45,7 +52,7 @@ const sections = [
   {
     title: "Contact",
     body:
-      "Questions about these Terms? Contact us at support@example.com.",
+      "Questions about these Terms? Contact us at abdulmoharayman@gmail.com.",
   },
 ]
 
@@ -78,4 +85,3 @@ export default function TermsPage() {
     </main>
   )
 }
-

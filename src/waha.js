@@ -1,3 +1,4 @@
+import { prepareWhatsAppImage } from './image-media.js'
 import { money } from './shopping-ui.js'
 import { getRuntimeSettings } from './settings-store.js'
 
@@ -65,7 +66,8 @@ export async function sendWahaFile(chatId, file, caption, session) {
   }
 }
 
-export async function sendWahaImage(chatId, product, session) {
+export async function sendWahaImage(chatId, product, session, caption) {
+  const file = await prepareWhatsAppImage(product.image, product.id)
   const config = await getWahaConfig()
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 15000)
@@ -79,12 +81,8 @@ export async function sendWahaImage(chatId, product, session) {
     body: JSON.stringify({
       chatId,
       session: session || config.session,
-      file: {
-        mimetype: product.image.mimetype,
-        data: product.image.data,
-        filename: product.image.filename || `${product.id}.jpg`,
-      },
-      caption: `*${product.name}*\n${money(product.price)}\n${product.available && Number(product.stock) > 0 ? `${product.stock} in stock` : 'Sold out'}\n\n${product.available && Number(product.stock) > 0 ? `Reply "add ${product.name} to cart" to add one.` : 'Reply *browse* to see other products.'}\nType *cart* to view your items.`,
+      file,
+      caption: caption || `*${product.name}* · *${money(product.price)}*\n${product.subtitle || ''}\n${product.available && Number(product.stock) > 0 ? 'In stock' : 'Sold out'}\n\nLike this one? Tell me its name or ask a question.`,
     }),
   }).finally(() => clearTimeout(timeout))
 

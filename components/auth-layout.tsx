@@ -1,8 +1,8 @@
 import type React from "react";
 import Image from "next/image";
 import Bg from "@/public/auth-commerce-ai.webp";
-import Logo from "@/public/whatsapp-commerce-logo.svg";
 import ParternBg from "@/public/pattern-bg.png";
+import { BrandLogo } from "@/components/brand-logo";
 
 interface AuthLayoutProps {
    children: React.ReactNode;
@@ -10,7 +10,7 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ children }: AuthLayoutProps) {
    return (
-      <div className="relative min-h-screen bg-black flex p-4">
+      <div className="relative flex min-h-svh bg-black p-2 sm:p-4">
          <Image
             src={ParternBg.src}
             alt=""
@@ -34,12 +34,10 @@ export function AuthLayout({ children }: AuthLayoutProps) {
                {/* Overlay content */}
                <div className="absolute inset-0 bg-gradient-to-bl from-black/70 via-transparent to-black/90 rounded-r-3xl" />
                <div className="absolute top-8 left-8">
-                  <Image
-                     src={Logo.src}
-                     alt="WhatsApp Commerce Hub logo"
-                     width={150}
-                     height={41}
-                     className="object-contain"
+                  <BrandLogo
+                     variant="color"
+                     className="h-[74px] w-auto drop-shadow-[0_8px_24px_rgba(0,0,0,.35)]"
+                     sizes="134px"
                      priority
                   />
                </div>
@@ -70,7 +68,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
          </div>
 
          {/* Right side - Form */}
-         <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
+         <div className="flex w-full items-center justify-center p-2 sm:p-8 lg:w-1/2">
             <div className="w-full max-w-md z-10 relative">{children}</div>
          </div>
       </div>

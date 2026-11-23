@@ -1,46 +1,53 @@
 export const money = (value) => `KES ${Number(value || 0).toLocaleString('en-KE', { maximumFractionDigits: 2 })}`
+const normalize = (text) => String(text || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+const quantities = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 }
 
 export function shoppingAction(text) {
   const value = String(text || '').trim().toLowerCase().replace(/[!?.,]+$/, '')
-  if (/^(hi|hello|hey|hey there|hello there|habari|jambo|sasa|start|menu|help menu)$/.test(value)) return { type: 'menu' }
-  const photos = value.match(/^(?:(?:show|send)(?: me)?\s+)?(?:product\s+)?(?:pics|pictures|photos|images)(?:\s+(?:of|for)\s+(.+))?$/)
+  if (/^(hi|hello|hey|hey there|hello there|habari|jambo|sasa|start|menu)$/.test(value)) return { type: 'menu' }
+  if (/^(browse|browse products|shop|products|catalog|catalogue|show products|show me products|all|show all|show all products)$/.test(value)) return { type: 'browse' }
+  if (/^(cart|view cart|my cart|show my cart|view my cart|what'?s in my cart)$/.test(value)) return { type: 'cart' }
+  if (/^(track|track order|track my order|order status)$/.test(value)) return { type: 'track' }
+  if (/^(help|contact|contact team|talk to someone|talk to a human|talk to our team)$/.test(value)) return { type: 'help' }
+  if (/^(more|next|another|show another|show me another|next page|more products|more photos|more pics)$/.test(value)) return { type: 'more' }
+  if (/^(yes|yes please|add it|add this|add that|add to cart|add to my cart)$/.test(value)) return { type: 'add', quantity: 1, query: '' }
+  const photos = value.match(/^(?:(?:show|send)(?: me)?\s+)?(?:all\s+)?(?:product\s+)?(?:pic|pics|picture|pictures|photo|photos|image|images)(?:\s+(?:(?:of|for)\s+)?(.+))?$/)
   if (photos) return { type: 'photos', query: photos[1] || '' }
-  if (/^(1|browse|browse products|shop|products|catalog|catalogue|show products|show me products)$/.test(value)) return { type: 'browse' }
-  if (/^(2|view cart|my cart)$/.test(value)) return { type: 'cart' }
-  if (/^(3|track|track order|track my order|order status)$/.test(value)) return { type: 'track' }
-  if (/^(4|help|contact|contact team|talk to someone|talk to a human|talk to our team)$/.test(value)) return { type: 'help' }
-  if (/^(more|next|next page|more products)$/.test(value)) return { type: 'more' }
-  const selection = value.match(/^(?:(show|view|add|remove)\s+)?(?:(\d{1,2})\s+)?p([1-9]\d*)(?:\s+(?:to|from)\s+(?:my\s+)?cart)?$/)
-  if (selection) return { type: selection[1] === 'add' ? 'add' : selection[1] === 'remove' ? 'remove' : 'product', index: Number(selection[3]) - 1, quantity: Math.max(1, Number(selection[2] || 1)) }
+  const addition = value.match(/^(?:add|put|take|i['’]?ll take)\s+(?:(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten)\s*)?(.*?)(?:\s+(?:to|in)\s+(?:my\s+)?(?:cart|bag))?$/)
+  if (addition) return { type: 'add', quantity: quantities[addition[1]] || Math.max(1, Number(addition[1] || 1)), query: addition[2].replace(/^(?:of\s+)?(?:it|this|that|these|those)$/, '').trim() }
   return null
 }
 
-export function welcomeMenu(name) {
-  return `👋 Welcome to *${name}*!\n\n1 — Browse products\n2 — View my cart\n3 — Track my order\n4 — Help & contact\n\nReply with a number, or ask a question.\nType *menu* anytime to come back.`
+export function welcomeMenu(name, categories = []) {
+  return `Hi 👋 Welcome to *${name}*.\n\nWhat are you shopping for today?${categories.length ? `\n${categories.join(' · ')}` : ''}\n\nTell me what you’re looking for, or say *browse* to see the collection.`
 }
 
-export function catalogPage(products, page = 0, pageSize = 5) {
-  if (!products.length) return 'There are no products to browse right now. Reply *4* for help or *menu* to go back.'
+export function catalogPage(products, page = 0, pageSize = 3, category = '') {
+  if (!products.length) return 'I don’t have products in that collection right now. What else would you like to see?'
   const start = page * pageSize
-  const entries = products.slice(start, start + pageSize).map((product, index) => {
-    if (!product.id) return `*P${start + index + 1} · Product no longer available*`
-    const available = product.available && Number(product.stock) > 0
-    return `*P${start + index + 1} · ${product.name}*\n${money(product.price)} · ${available ? 'In stock' : 'Sold out'}`
-  })
-  return [`🛍️ *Browse products* · ${start + 1}–${Math.min(start + pageSize, products.length)} of ${products.length}`, ...entries, `Reply *P${start + 1}* for details, or *add P${start + 1}* to add one.\nFor quantity: *add 2 P${start + 1}*.`, ...(start + pageSize < products.length ? ['Reply *more* for the next page.'] : []), '*2* — View cart · *menu* — Main menu'].join('\n\n')
+  const visible = products.slice(start, start + pageSize)
+  return [`*${category || 'The collection'}*`, ...visible.map(product => `• ${product.name} — ${money(product.price)}${product.available && Number(product.stock) > 0 ? '' : ' · Sold out'}`), 'Which one catches your eye? Just tell me its name.', ...(start + pageSize < products.length ? ['Say *more* to see the next few.'] : [])].join('\n\n')
 }
 
-export function productCard(product, code) {
+export function productCard(product) {
   const available = product.available && Number(product.stock) > 0
-  return [`*${product.name}*`, product.subtitle, `*${money(product.price)}*`, ...(!product.image?.data || !product.image?.mimetype ? ['Photo not available yet.'] : []), available ? `${product.stock} in stock` : 'Currently sold out', '', available ? `Reply *add ${code}* to add one, or *add 2 ${code}* for two.` : 'Reply *browse* to see other products.', '*2* — View cart · *browse* — Products'].filter((line) => line !== undefined && line !== null).join('\n')
+  return [`*${product.name}* · *${money(product.price)}*`, product.subtitle, available ? 'In stock.' : 'Currently sold out.', ...(!product.image?.data || !product.image?.mimetype ? ['A photo isn’t available for this item yet.'] : []), available ? 'Would you like to add it? Say *yes*, or *add two*.' : 'Would you like to see something similar?'].filter(Boolean).join('\n\n')
 }
 
 export function matchPhotoProducts(products, query) {
-  const normalize = (text) => String(text || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
-  const search = normalize(query)
+  const search = normalize(query).replace(/^(?:show me|show|tell me about|i want to see|i want|the|a|an) /, '')
   if (!search) return products
-  return products.filter((product) => {
+  const exact = products.filter(product => normalize(product.name) === search)
+  if (exact.length) return exact
+  return products.filter(product => {
     const name = normalize(product.name)
-    return name && (name.includes(search) || search.includes(name))
+    return name && (name.includes(search) || search.split(' ').every(word => name.split(' ').some(part => part.startsWith(word))))
   })
+}
+
+export function matchingCategory(products, text) {
+  const value = normalize(text).replace(/^(?:show me|show|browse|shop|i want|looking for) /, '')
+  const aliases = { perfume: 'fragrance', perfumes: 'fragrance', fragrances: 'fragrance', 'bodycare': 'body care' }
+  const query = aliases[value] || value
+  return [...new Set(products.map(product => product.category).filter(Boolean))].find(category => normalize(category) === query) || null
 }

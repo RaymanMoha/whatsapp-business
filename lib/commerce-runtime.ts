@@ -12,30 +12,37 @@ export async function getCommerceRuntimeStatus() {
    const { readProducts } = await import("@/src/product-store");
    const { getMpesaStatus } = await import("@/src/mpesa-store");
    const { getRuntimeSettings } = await import("@/src/settings-store");
+   const { isRuntimeHeartbeatFresh, readRuntimeHeartbeat } = await import("@/src/runtime-heartbeat");
    const runtime = await getRuntimeSettings();
    const wahaBaseUrl = runtime.wahaBaseUrl;
    const wahaApiKey = runtime.wahaApiKey;
    const sessionName = runtime.wahaSession;
    const botBaseUrl = process.env.BOT_BASE_URL || `http://localhost:${process.env.PORT || 8080}`;
 
-   const [bot, waha, mongo, products, mpesa] = await Promise.allSettled([
-      fetch(`${botBaseUrl}/health`, { cache: "no-store" }).then((response) =>
+   const [bot, waha, mongo, products, mpesa, workerHeartbeat] = await Promise.allSettled([
+      fetch(`${botBaseUrl}/health`, { cache: "no-store", signal: AbortSignal.timeout(3500) }).then((response) =>
          response.ok ? response.json() : null,
       ),
       fetch(`${wahaBaseUrl}/api/sessions?all=true`, {
          cache: "no-store",
          headers: wahaApiKey ? { "X-Api-Key": wahaApiKey } : {},
+         signal: AbortSignal.timeout(3500),
       }).then((response) => (response.ok ? response.json() : [])),
       getMongoStatus(),
       readProducts(),
       getMpesaStatus(),
+      readRuntimeHeartbeat(),
    ]);
 
-   const botHealth = bot.status === "fulfilled" ? bot.value : null;
+   const heartbeat = workerHeartbeat.status === "fulfilled" && isRuntimeHeartbeatFresh(workerHeartbeat.value)
+      ? workerHeartbeat.value
+      : null;
+   const botHealth = bot.status === "fulfilled" && bot.value ? bot.value : heartbeat?.bot || null;
    const sessions = (waha.status === "fulfilled" && Array.isArray(waha.value)
       ? waha.value
       : []) as WahaSession[];
-   const session = sessions.find((item) => item.name === sessionName) || sessions[0];
+   const directSession = sessions.find((item) => item.name === sessionName) || sessions[0];
+   const messagingStatus = directSession?.status || heartbeat?.messaging?.status || "NOT_CONNECTED";
    const productList = products.status === "fulfilled" && Array.isArray(products.value) ? products.value : [];
    const imageCount = productList.filter((product) => Boolean(product.image?.data)).length;
 
@@ -46,11 +53,12 @@ export async function getCommerceRuntimeStatus() {
          businessName: botHealth?.businessName || runtime.businessName,
       },
       messaging: {
-         online: Boolean(session),
-         session: session?.name || sessionName,
-         status: session?.status || "NOT_CONNECTED",
-         phone: session?.me?.id || null,
-         pushName: session?.me?.pushName || null,
+         online: messagingStatus === "WORKING",
+         session: directSession?.name || heartbeat?.messaging?.session || sessionName,
+         status: messagingStatus,
+         phone: directSession?.me?.id || heartbeat?.messaging?.phone || null,
+         pushName: directSession?.me?.pushName || heartbeat?.messaging?.pushName || null,
+         source: directSession ? "direct" : heartbeat ? "heartbeat" : "unavailable",
       },
       ai: {
          configured: Boolean(runtime.groqApiKey),

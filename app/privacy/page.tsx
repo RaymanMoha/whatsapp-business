@@ -1,5 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
+import type { Metadata } from "next"
+
+export const metadata: Metadata = {
+  title: "Privacy Policy",
+  description: "How AppBase handles merchant, customer conversation, catalogue, order and payment information.",
+  alternates: { canonical: "/privacy" },
+}
 
 const sections = [
   {
@@ -40,7 +47,7 @@ const sections = [
   {
     title: "Contact",
     body:
-      "Privacy questions should be sent to the business contact configured by the administrator.",
+      "Privacy questions should be sent to abdulmoharayman@gmail.com.",
   },
 ]
 
