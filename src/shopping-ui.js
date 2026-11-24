@@ -5,6 +5,8 @@ const quantities = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 
 export function shoppingAction(text) {
   const value = String(text || '').trim().toLowerCase().replace(/[!?.,]+$/, '')
   if (/^(checkout|check out|chexkou|chekout|checout|checkot|checkou|checkuot|pay|pay cart)$/.test(value)) return { type: 'checkout' }
+  const confirmedQuantity = value.match(/^yes(?: please)?[ ,]+([1-9][0-9]?|one|two|three|four|five|six|seven|eight|nine|ten)$/)
+  if (confirmedQuantity) return { type: 'quantity', quantity: quantities[confirmedQuantity[1]] || Number(confirmedQuantity[1]) }
   if (/^(?:[1-9][0-9]?|one|two|three|four|five|six|seven|eight|nine|ten)$/.test(value)) return { type: 'quantity', quantity: quantities[value] || Number(value) }
   if (/^(hi|hello|hey|hey there|hello there|habari|jambo|sasa|start|menu)$/.test(value)) return { type: 'menu' }
   if (/^(browse|browse products|shop|products|catalog|catalogue|show products|show me products|all|show all|show all products)$/.test(value)) return { type: 'browse' }
