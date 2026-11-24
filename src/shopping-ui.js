@@ -32,7 +32,7 @@ export function catalogPage(products, page = 0, pageSize = 3, category = '') {
 
 export function productCard(product) {
   const available = product.available && Number(product.stock) > 0
-  return [`*${product.name}* · *${money(product.price)}*`, product.subtitle, available ? 'In stock.' : 'Currently sold out.', ...(!product.image?.data || !product.image?.mimetype ? ['A photo isn’t available for this item yet.'] : []), available ? 'Would you like to add it? Say *yes*, or *add two*.' : 'Would you like to see something similar?'].filter(Boolean).join('\n\n')
+  return [`*${product.name}* · *${money(product.price)}*`, product.subtitle, available ? 'In stock.' : 'Currently sold out.', ...(!product.image?.data || !product.image?.mimetype ? ['A photo isn’t available for this item yet.'] : []), available ? (product.id === 'nia-mpesa-test' ? 'Add one unit to test a KES 2 payment. Say *yes*. Approving a production M-Pesa prompt charges KES 2.' : 'Would you like to add it? Say *yes*, or *add two*.') : 'Would you like to see something similar?'].filter(Boolean).join('\n\n')
 }
 
 export function matchPhotoProducts(products, query) {

@@ -1,5 +1,6 @@
 import { demoProfile } from './demo-profile.js'
 import { demoProducts } from './demo-products.js'
+import { demoPaymentTestProduct } from './demo-payment-test.js'
 
 const defaultProducts = [
   {
@@ -114,4 +115,4 @@ const defaultProducts = [
   },
 ]
 
-export const products = demoProfile ? demoProducts : defaultProducts
+export const products = demoProfile ? [...demoProducts, demoPaymentTestProduct] : defaultProducts

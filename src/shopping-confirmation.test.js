@@ -43,6 +43,15 @@ test('yes adds only after a fresh product question, without repeated accidental 
     await reply('checkout')
     await reply('yes')
     assert.match(await reply('cart'), /4 x Olay/)
+    await reply('clear cart')
+    assert.match(await reply('M-Pesa Test'), /KES 2/)
+    await reply('yes')
+    assert.match(await reply('checkout'), /Checkout preview/)
+    await reply('add it')
+    assert.match(await reply('checkout'), /exactly \*one M-Pesa Test/)
+    await reply('Olay')
+    await reply('yes')
+    assert.match(await reply('checkout'), /nothing else/)
   } finally {
     if (child.exitCode === null) { child.kill(); await new Promise(resolve => child.once('exit', resolve)) }
     await rm(cwd, { recursive: true, force: true })

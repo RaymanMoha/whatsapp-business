@@ -1,6 +1,6 @@
 import 'dotenv/config'
 import { getMongoDb } from '../src/mongodb.js'
-import { demoProducts } from '../src/demo-products.js'
+import { products as demoProducts } from '../src/catalog.js'
 import { demoKnowledge, demoProfile } from '../src/demo-profile.js'
 
 if (!demoProfile || !/_demo(?:_|$)/.test(process.env.MONGODB_DB || '')) {

@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import { demoProfile } from './demo-profile.js'
+import { demoPaymentTestProduct, isDemoPaymentTest } from './demo-payment-test.js'
 
 import express from 'express'
 import { shoppingAction, welcomeMenu, catalogPage, productCard, matchPhotoProducts, matchingCategory, money } from './shopping-ui.js'
@@ -260,6 +261,7 @@ app.post('/test/reply', async (request, response) => {
     : await Promise.all([readProducts(), readActivePromotions()])
   const incoming = {
     id: `test-${Date.now()}`,
+    previewOnly: true,
     chatId,
     session: config.wahaSession,
     text: message,
@@ -389,17 +391,17 @@ async function buildCustomerReply(incoming, products, promotions = []) {
     const runtime = await getRuntimeSettings()
     return { reply: runtime.handoffMessage, imageProducts: [] }
   }
-  const cartReply = await buildCartReply(incoming, products, promotions)
-  const paymentReply = cartReply ? null : await buildPaymentReply(incoming, products, promotions)
-  const promotionReply = cartReply || paymentReply ? null : buildPromotionReply(incoming.text, promotions)
-  const commerceReply = cartReply || paymentReply || promotionReply
-  if (commerceReply) return { reply: sanitizeWhatsAppReply(commerceReply), imageProducts: [] }
   if (!action) {
     const matches = matchPhotoProducts(products, incoming.text)
     if (matches.length === 1) {
       return buildProductCardReply(incoming.chatId, matches[0])
     }
   }
+  const cartReply = await buildCartReply(incoming, products, promotions)
+  const paymentReply = cartReply ? null : await buildPaymentReply(incoming, products, promotions)
+  const promotionReply = cartReply || paymentReply ? null : buildPromotionReply(incoming.text, promotions)
+  const commerceReply = cartReply || paymentReply || promotionReply
+  if (commerceReply) return { reply: sanitizeWhatsAppReply(commerceReply), imageProducts: [] }
   const reply = sanitizeWhatsAppReply(await buildReply(incoming, products, promotions))
   rememberPendingProduct(incoming.chatId, incoming.text, products)
   return { reply, imageProducts: selectWhatsAppProductImages(products, incoming.text) }
@@ -506,15 +508,9 @@ async function buildCartReply(incoming, products, promotions = []) {
 }
 
 async function buildPaymentReply(incoming, products, promotions = []) {
-  if (demoProfile && (isPaymentIntent(incoming.text) || isPaymentConfirmationClaim(incoming.text))) {
-    const items = await getCart(incoming.chatId)
-    if (!items.length) return 'Your demo cart is empty. Reply *browse* to choose a product first.'
-    const { items: checked, issues } = revalidateCartItems(items, products)
-    if (issues.length) return `Please update your cart before checkout:\n${issues.join('\n')}\n\nReply *browse* to see current availability.`
-    return `${formatCartSummary(checked, 'Demo checkout', calculateCartPricing(checked, promotions))}\n\nDelivery is quoted separately after your area is confirmed.\n\n*This is a demo preview.* No payment request was sent, no money was charged, and no real order was placed.\n\n*menu* — Main menu · *clear cart* — Start again`
-  }
   if (isPaymentConfirmationClaim(incoming.text)) {
     const [latestPayment] = await listRecentPaymentsForChat(incoming.chatId).catch(() => [])
+    if (demoProfile && latestPayment?.source !== 'whatsapp-demo-payment-test') return 'Demo purchases are previews. To test a real KES 2 payment, choose *M-Pesa Test*, add one unit, then type *checkout*. Payment is confirmed only by the payment provider.'
     if (
       latestPayment &&
       latestPayment.status !== 'Paid' &&
@@ -567,6 +563,12 @@ async function buildPaymentReply(incoming, products, promotions = []) {
 
   const phone = typedPhone || extractPhoneFromChatId(incoming.chatId)
   const pricing = calculateCartPricing(items, promotions)
+  const paymentTest = Boolean(demoProfile && isDemoPaymentTest(items, pricing))
+  if (demoProfile && !paymentTest) {
+    if (items.some(item => item.productId === demoPaymentTestProduct.id)) return 'For the KES 2 payment test, your cart must contain exactly *one M-Pesa Test* item and nothing else, with no discount. Clear your cart, add one M-Pesa Test, then type *checkout*.'
+    return `${formatCartSummary(items, 'Demo checkout', pricing)}\n\n*This is a demo preview.* No payment request was sent, no money was charged, and no real order was placed.\n\nTo test a real *KES 2* payment, clear your cart and add one *M-Pesa Test* item.`
+  }
+  if (incoming.previewOnly) return `${formatCartSummary(items, 'Checkout preview', pricing)}\n\nNo payment prompt is sent from this preview. Continue in WhatsApp to request payment.`
   if (!phone) {
     return `${formatCartSummary(items, 'Your cart', pricing)}\n\nSend the M-Pesa phone number, for example: "2547XXXXXXX".`
   }
@@ -587,7 +589,7 @@ async function buildPaymentReply(incoming, products, promotions = []) {
       phone,
       amount,
       accountReference: items.length === 1 ? items[0].productId : `CART${Date.now().toString(36)}`,
-      description: `${productName} WhatsApp order`,
+      description: paymentTest ? 'KES 2 payment test - no delivery' : `${productName} WhatsApp order`,
       chatId: incoming.chatId,
       customerName: incoming.customerName,
       productId: items.length === 1 ? items[0].productId : null,
@@ -597,13 +599,14 @@ async function buildPaymentReply(incoming, products, promotions = []) {
       subtotal: pricing.subtotal,
       discount: pricing.discount,
       promotion: pricing.promotion,
-      source: 'whatsapp',
+      source: paymentTest ? 'whatsapp-demo-payment-test' : 'whatsapp',
     })
     await syncOrderFromPayment(payment)
     pendingProducts.delete(incoming.chatId)
     pendingPayments.delete(incoming.chatId)
     return [
-      formatCartSummary(items, 'Payment request', pricing),
+      formatCartSummary(items, paymentTest ? 'KES 2 payment test — no physical delivery' : 'Payment request', pricing),
+      ...(paymentTest ? [mpesa.environment === 'production' ? 'This is a real KES 2 payment test. Approving the phone prompt will charge KES 2.' : 'Sandbox test only: this does not charge real money.'] : []),
       payment.customerMessage || 'Check your phone and enter your M-Pesa PIN to complete payment.',
     ].join('\n')
   } catch (error) {
