@@ -85,6 +85,7 @@ export async function POST(request: NextRequest) {
    const order = await syncOrderFromPayment(payment);
    const confirmedPaid = payment.status === "Paid";
    if (!confirmedPaid) {
+      await enqueuePaymentDelivery({ id: `payment-failure-${payment.id}`, type: "payment-failed", paymentId: payment.id, orderId: order.id });
       return NextResponse.json({ ResultCode: 0, ResultDesc: duplicate ? "Already processed" : "Accepted" });
    }
 

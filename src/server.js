@@ -221,16 +221,27 @@ async function runMessageWorker() {
 
 async function processPaymentDelivery(job) {
   const [payment, order] = await Promise.all([getPaymentById(job.paymentId), getOrderById(job.orderId)])
-  if (!payment || payment.status !== 'Paid' || !order) throw new Error('Paid order is unavailable for delivery')
+  if (!payment || !order) throw new Error('Payment order is unavailable for delivery')
   const targetChatId = payment.chatId || (payment.phone ? `${String(payment.phone).replace(/\D/g, '')}@c.us` : '')
   if (!targetChatId) throw new Error('Payment has no WhatsApp recipient')
+  const sandbox = payment.environment === 'sandbox' || payment.source === 'sandbox-integration-test'
+  const paymentTest = payment.source === 'whatsapp-demo-payment-test' || sandbox
+  if (job.type === 'payment-failed') {
+    if (payment.status !== 'Failed' || payment.failureSentAt) return
+    const reason = payment.resultCode === 1032 ? 'The payment was cancelled.' : payment.resultCode === 1037 ? 'The payment prompt timed out or the phone could not be reached.' : 'The payment was not completed.'
+    await sendWahaText(targetChatId, `${sandbox ? '*Sandbox test — no real charge.*\n' : ''}${reason} Your order is not paid. Your cart is saved; type *checkout* to try again.`)
+    await updatePaymentById(payment.id, { failureSentAt: new Date().toISOString() })
+    return
+  }
+  if (payment.status !== 'Paid') throw new Error('Paid order is unavailable for delivery')
+
 
   if (!payment.confirmationSentAt) {
     const items = Array.isArray(payment.lineItems) && payment.lineItems.length
       ? payment.lineItems.map((item) => `${item.quantity || 1} x ${item.name || 'item'}`)
       : [payment.productName || payment.accountReference || 'your order']
     const savings = Number(payment.discount || 0) > 0 ? [`Promotion: ${payment.promotion?.name || 'Offer'} (-KES ${payment.discount}).`] : []
-    const message = ['Payment received for your order.', ...items, ...savings, `Amount: KES ${payment.amount}.`, `Order: ${order.orderNumber}.`, `Receipt: ${payment.mpesaReceiptNumber}.`, 'Your order is confirmed and waiting for preparation.'].join('\n')
+    const message = [sandbox ? '*Sandbox payment simulation — no real money charged.*' : 'Payment received for your order.', ...items, ...savings, `Amount: KES ${payment.amount}.`, `Order: ${order.orderNumber}.`, `Receipt: ${payment.mpesaReceiptNumber}.`, paymentTest ? 'Payment test complete. No physical product or delivery is booked.' : 'Your order is confirmed and waiting for preparation.'].join('\n')
     await sendWahaText(targetChatId, message)
     await updatePaymentById(payment.id, { confirmationSentAt: new Date().toISOString() })
     await appendConversationEvent({ id: `${payment.checkoutRequestId}-payment-confirmed`, chatId: targetChatId, customerName: payment.customerName || targetChatId, direction: 'assistant', text: message, status: 'sent' })
@@ -239,7 +250,7 @@ async function processPaymentDelivery(job) {
   if (!payment.receiptSharedAt) {
     const receipt = await getReceiptByPaymentId(payment.id)
     if (!receipt) throw new Error('Payment receipt is unavailable')
-    await sendWahaFile(targetChatId, receipt, `Receipt for order ${order.orderNumber}. Thank you for your payment.`)
+    await sendWahaFile(targetChatId, receipt, ` ${sandbox ? "Sandbox simulation receipt — no real charge. " : ""}Receipt for order ${order.orderNumber}.${paymentTest ? " Payment test only; no delivery." : " Thank you for your payment."}`.trim())
     const receiptSharedAt = await markReceiptShared(payment.id)
     await updatePaymentById(payment.id, { receiptSharedAt })
     await appendConversationEvent({ id: `${payment.checkoutRequestId}-receipt-shared`, chatId: targetChatId, customerName: payment.customerName || targetChatId, direction: 'assistant', text: `Shared payment receipt: ${receipt.receiptNumber}`, status: 'sent' })
@@ -333,7 +344,12 @@ async function buildCustomerReply(incoming, products, promotions = []) {
     shoppingSessions.set(incoming.chatId, session)
     if (shoppingSessions.size > 1000) shoppingSessions.delete(shoppingSessions.keys().next().value)
   }
-  const action = shoppingAction(incoming.text)
+  let action = shoppingAction(incoming.text)
+  if (action?.type === 'checkout') incoming = { ...incoming, text: 'checkout' }
+  if (action?.type === 'quantity') {
+    if (addConfirmation && addConfirmation === pendingProducts.get(incoming.chatId)?.id) action = { type: 'add', quantity: action.quantity, query: '' }
+    else return { reply: 'Which product would you like? Tell me its name first, then the quantity.', imageProducts: [] }
+  }
   const category = matchingCategory(products, incoming.text)
   if (action?.type === 'menu') {
     pendingProducts.delete(incoming.chatId)
@@ -396,13 +412,18 @@ async function buildCustomerReply(incoming, products, promotions = []) {
     if (matches.length === 1) {
       return buildProductCardReply(incoming.chatId, matches[0])
     }
+    if (matches.length > 1) return { reply: `Which one do you mean?\n\n${matches.map(product => `${product.name} — ${money(product.price)}`).join('\n')}\n\nReply with its name.`, imageProducts: [] }
   }
   const cartReply = await buildCartReply(incoming, products, promotions)
   const paymentReply = cartReply ? null : await buildPaymentReply(incoming, products, promotions)
   const promotionReply = cartReply || paymentReply ? null : buildPromotionReply(incoming.text, promotions)
   const commerceReply = cartReply || paymentReply || promotionReply
   if (commerceReply) return { reply: sanitizeWhatsAppReply(commerceReply), imageProducts: [] }
-  const reply = sanitizeWhatsAppReply(await buildReply(incoming, products, promotions))
+  let reply = sanitizeWhatsAppReply(await buildReply(incoming, products, promotions))
+  if (/\b(?:added|updated|removed)\b.*\b(?:cart|order)\b|your order is|please confirm|how many|would you like to add/i.test(reply)) {
+    const cart = await getCart(incoming.chatId)
+    reply = cart.length ? `${formatCartSummary(cart, 'Your cart', calculateCartPricing(cart, promotions))}\n\nTell me a product name to keep shopping, or type *checkout*.` : 'Your cart is empty. Tell me a product name to see its photo and add it.'
+  }
   rememberPendingProduct(incoming.chatId, incoming.text, products)
   return { reply, imageProducts: selectWhatsAppProductImages(products, incoming.text) }
 }
@@ -752,7 +773,7 @@ async function buildPaymentContext(chatId) {
         ? payment.lineItems.map((item) => `${item.quantity} x ${item.name}`).join(', ')
         : payment.productName || payment.accountReference || 'order'
       const receipt = payment.mpesaReceiptNumber ? ` Receipt: ${payment.mpesaReceiptNumber}.` : ''
-      return `${index + 1}. ${product}: KES ${payment.amount}, status ${payment.status}.${receipt}`
+      return `${index + 1}. ${product}: KES ${payment.amount}, status ${payment.status}.${payment.environment === 'sandbox' || payment.source === 'sandbox-integration-test' ? ' Sandbox simulation; no real charge.' : ''}${receipt}`
     })
     .join('\n')
 }
@@ -803,7 +824,8 @@ Rules:
 - For product questions, answer only from the approved product catalog above.
 - Never output product image URLs, placeholder links, example links, markdown image links, or data URLs. Product pictures are sent separately as real WhatsApp media.
 - When the customer asks generally what is available, give a concise numbered product list and end with: "Reply with a product name to see its photo."
-- Do not claim that multiple product photos or image links will follow. At most one relevant product image card is sent after each reply.
+- Never claim to attach or send a photo. The application handles actual media separately.
+- You answer FAQs only. Never claim an item was added, an order was created, or a quantity was saved. Never ask for quantity or confirmation to mutate a cart; direct the customer to type a product name, cart, or checkout.
 - Mention only promotions listed under Active promotions. Pricing rules apply the best eligible offer automatically at checkout.
 - When an approved reply template fits the question, follow its wording and replace its variables with approved information.
 - Keep replies short enough for WhatsApp: use short paragraphs, simple language, and one clear next action.\n- Customers can type menu to see options, browse to see products, and cart to see their cart. Do not invent buttons or claim a human has been notified.

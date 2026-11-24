@@ -15,7 +15,7 @@ test('supports natural intent without product codes or number menus', () => {
   assert.deepEqual(shoppingAction('add lipstick to my cart'),{type:'add',quantity:1,query:'lipstick'})
   assert.equal(shoppingAction('yes please').type,'confirm_add')
   assert.equal(shoppingAction('add it').type,'add')
-  for(const text of ['P1','2','254712345678','paid','checkout','Do not add lipstick','What are your hours?']) assert.equal(shoppingAction(text),null)
+  for(const text of ['P1','254712345678','paid','Do not add lipstick','What are your hours?']) assert.equal(shoppingAction(text),null)
 })
 
 test('understands singular and plural photo requests and continued browsing', () => {
@@ -38,4 +38,11 @@ test('shows names and honest availability with a single next action', () => {
   assert.match(productCard(products[0]),/add two/)
   assert.doesNotMatch(productCard(products[1]),/Would you like to add/)
   assert.doesNotMatch(welcomeMenu('Our Shop',['Makeup','Fragrance']),/P\d|1 —|Reply with a number/)
+})
+
+test('matches CK as a word and recognizes checkout typos and quantities', () => {
+  const catalog = products
+  assert.deepEqual(matchPhotoProducts(catalog, 'ck').map(p => p.id), ['ck'])
+  assert.equal(shoppingAction('Chexkou').type, 'checkout')
+  assert.deepEqual(shoppingAction('1'), { type: 'quantity', quantity: 1 })
 })

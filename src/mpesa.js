@@ -93,6 +93,7 @@ export async function initiateStkPush(input) {
     customerMessage: data.CustomerMessage || null,
     status: response.ok && data.ResponseCode === '0' ? 'STK sent' : 'Request failed',
     provider: 'mpesa',
+    environment: config.environment,
     providerResponse: data,
   })
 

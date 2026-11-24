@@ -24,7 +24,7 @@ export function paymentClaimReply(payment) {
 
   if (payment.status === 'Paid') {
     const receipt = payment.mpesaReceiptNumber ? ` Receipt: ${payment.mpesaReceiptNumber}.` : ''
-    return `Payment confirmed by M-Pesa for KES ${payment.amount}.${receipt}`
+    return payment.environment === 'sandbox' ? `Sandbox payment simulation confirmed for KES ${payment.amount}. No real money was charged.${receipt}` : `Payment confirmed by M-Pesa for KES ${payment.amount}.${receipt}`
   }
 
   if (payment.status === 'Failed' || payment.status === 'Request failed') {

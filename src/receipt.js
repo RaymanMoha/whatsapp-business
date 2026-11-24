@@ -3,7 +3,7 @@ import path from 'node:path'
 import fontkit from '@pdf-lib/fontkit'
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 
-export const RECEIPT_TEMPLATE_VERSION = 2
+export const RECEIPT_TEMPLATE_VERSION = 3
 
 const DEEP = rgb(0.024, 0.071, 0.051)
 const DEEP_GREEN = rgb(0.024, 0.141, 0.102)
@@ -80,6 +80,7 @@ export function getReceiptId(payment) {
 }
 
 export async function createReceiptPdf(payment) {
+  const sandbox = payment.environment === 'sandbox' || payment.source === 'sandbox-integration-test'
   const document = await PDFDocument.create()
   const page = document.addPage([420, 595])
   const regular = await document.embedFont(StandardFonts.Helvetica)
@@ -108,15 +109,15 @@ export async function createReceiptPdf(payment) {
   } else {
     page.drawText('APPBASE', { x: 28, y: 540, size: 15, font: bold, color: LIME })
   }
-  drawRightText(page, 'PAYMENT RECEIPT', { y: 552, size: 8, font: bold, color: WHITE, opacity: 0.72 })
+  drawRightText(page, sandbox ? 'SANDBOX TEST RECEIPT' : 'PAYMENT RECEIPT', { y: 552, size: 8, font: bold, color: WHITE, opacity: 0.72 })
   drawRightText(page, fitText(businessName, regular, 8, 170), { y: 536, size: 8, font: regular, color: WHITE, opacity: 0.5 })
 
   page.drawRectangle({ x: 28, y: 475, width: 49, height: 22, color: LIME })
-  page.drawText('PAID', { x: 40, y: 482, size: 8, font: bold, color: DEEP })
-  page.drawText('TOTAL RECEIVED', { x: 28, y: 454, size: 7.5, font: bold, color: WHITE, opacity: 0.5 })
+  page.drawText(sandbox ? 'TEST' : 'PAID', { x: 40, y: 482, size: 8, font: bold, color: DEEP })
+  page.drawText(sandbox ? 'SIMULATED AMOUNT - NO REAL CHARGE' : 'TOTAL RECEIVED', { x: 28, y: 454, size: 7.5, font: bold, color: WHITE, opacity: 0.5 })
   page.drawText(`KES ${formatMoney(payment.amount)}`, { x: 28, y: 412, size: 34, font: display, color: WHITE })
   page.drawText(
-    discount > 0 ? `You saved KES ${formatMoney(discount)} with ${promotionName}.` : 'Payment confirmed and matched to this order.',
+    sandbox ? 'Sandbox simulation only. No real money was received.' : discount > 0 ? `You saved KES ${formatMoney(discount)} with ${promotionName}.` : 'Payment confirmed and matched to this order.',
     { x: 28, y: 393, size: 9, font: regular, color: discount > 0 ? LIME : WHITE, opacity: discount > 0 ? 1 : 0.58 },
   )
   drawRightText(page, `REF ${fitText(receiptNumber, bold, 8, 130)}`, { y: 404, size: 8, font: bold, color: LIME })

@@ -35,3 +35,7 @@ test('selects at most one real product image', () => {
   assert.equal(selected.length, 1)
   assert.equal(selected[0].name, 'Dress')
 })
+
+test('removes unsupported photo attachment promises', () => {
+  assert.equal(sanitizeWhatsAppReply("Calvin Klein CK One\n(Here’s a photo of the product.)"), 'Calvin Klein CK One')
+})

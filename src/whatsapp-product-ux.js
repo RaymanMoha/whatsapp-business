@@ -5,7 +5,7 @@ const PRODUCT_IMAGE_URL = /https?:\/\/\S+(?:\.(?:avif|gif|jpe?g|png|webp)(?:\?\S
 export function sanitizeWhatsAppReply(value) {
   const lines = String(value || '')
     .split('\n')
-    .filter((line) => !PRODUCT_IMAGE_URL.test(line))
+    .filter((line) => !PRODUCT_IMAGE_URL.test(line) && !/(?:here(?:['’]s| is| are)|attached|sending|sent|see below).*\b(?:photo|picture|image)s?\b/i.test(line))
 
   return lines
     .join('\n')
