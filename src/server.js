@@ -342,6 +342,10 @@ async function buildCustomerReply(incoming, products, promotions = []) {
     else pendingProducts.delete(incoming.chatId)
     if (saved.awaitingAdd && focus) pendingAddConfirmations.set(incoming.chatId, focus.id)
     else pendingAddConfirmations.delete(incoming.chatId)
+  } else {
+    shoppingSessions.delete(incoming.chatId)
+    pendingProducts.delete(incoming.chatId)
+    pendingAddConfirmations.delete(incoming.chatId)
   }
   try { return await buildCustomerReplyInternal(incoming, products, promotions) }
   finally {

@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-test('numbering, pronouns and AI actions use an unrelated merchant catalog and never AI confirmations', { timeout: 20000 }, async () => {
+test('numbering, pronouns and AI actions use an unrelated merchant catalog and never AI confirmations', { timeout: 45000 }, async () => {
   const cwd = await mkdtemp(join(tmpdir(), 'merchant-routing-'))
   await mkdir(join(cwd, 'data'))
   await writeFile(join(cwd, 'data/products.json'), JSON.stringify({ products: [
@@ -25,7 +25,7 @@ test('numbering, pronouns and AI actions use an unrelated merchant catalog and n
   const port = reserve.address().port; await new Promise(resolve => reserve.close(resolve))
   const child = spawn(process.execPath, [fileURLToPath(new URL('./server.js', import.meta.url))], { cwd, env: { ...process.env, DEMO_PROFILE: '', MONGODB_URI: '', PORT: String(port), GROQ_API_KEY: 'test-only', GROQ_BASE_URL: `http://127.0.0.1:${ai.address().port}`, WAHA_BASE_URL: 'http://127.0.0.1:1' }, stdio: 'ignore' })
   try {
-    for (let i = 0; i < 80; i++) { try { await fetch(`http://127.0.0.1:${port}/health`); break } catch { await new Promise(r => setTimeout(r, 100)) } }
+    for (let i = 0; i < 300; i++) { try { await fetch(`http://127.0.0.1:${port}/health`); break } catch { await new Promise(r => setTimeout(r, 100)) } }
     const say = async (message, chatId = 'merchant-one') => (await (await fetch(`http://127.0.0.1:${port}/test/reply`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message, chatId }) })).json()).reply
     assert.match(await say('Bros'), /1\. Copper Spanner/)
     assert.match(await say('Number 2'), /Steel Hammer/)

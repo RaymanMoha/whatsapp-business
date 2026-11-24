@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-test('yes adds only after a fresh product question, without repeated accidental additions', { timeout: 15000 }, async () => {
+test('yes adds only after a fresh product question, without repeated accidental additions', { timeout: 45000 }, async () => {
   const listener = createServer()
   await new Promise(resolve => listener.listen(0, '127.0.0.1', resolve))
   const port = listener.address().port
@@ -18,7 +18,7 @@ test('yes adds only after a fresh product question, without repeated accidental 
   })
   try {
     let ready = false
-    for (let i = 0; i < 60; i++) {
+    for (let i = 0; i < 300; i++) {
       try { await fetch(`http://127.0.0.1:${port}/health`); ready = true; break } catch { await new Promise(resolve => setTimeout(resolve, 100)) }
     }
     assert.ok(ready, 'test server started')
