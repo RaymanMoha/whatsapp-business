@@ -1,5 +1,7 @@
 import 'dotenv/config'
 import { demoProfile } from './demo-profile.js'
+import { readShoppingContext, saveShoppingContext } from './shopping-context-store.js'
+import { validateShoppingDecision, approximateShoppingCommand } from './shopping-intent.js'
 import { demoPaymentTestProduct, isDemoPaymentTest } from './demo-payment-test.js'
 
 import express from 'express'
@@ -31,10 +33,9 @@ import { getOrderById, syncOrderFromPayment } from './order-store.js'
 import { isPaymentConfirmationClaim, paymentClaimReply } from './payment-status.js'
 import { getMongoStatus } from './mongodb.js'
 import { findProductsForMessage, readProducts } from './product-store.js'
-import { sanitizeWhatsAppReply, selectWhatsAppProductImages } from './whatsapp-product-ux.js'
+import { sanitizeWhatsAppReply } from './whatsapp-product-ux.js'
 import { getRuntimeSettings } from './settings-store.js'
 import { sendWahaFile, sendWahaImage, sendWahaText } from './waha.js'
-import { readMessageTemplates } from './template-store.js'
 import { verifyWebhookSignature } from './webhook-auth.js'
 import { getReceiptByPaymentId, markReceiptShared } from './receipt-store.js'
 import { calculateCartPricing, promotionCustomerDescription } from './promotion-engine.js'
@@ -333,6 +334,22 @@ function buildProductCardReply(chatId, product) {
 }
 
 async function buildCustomerReply(incoming, products, promotions = []) {
+  const saved = await readShoppingContext(incoming.chatId)
+  if (saved) {
+    shoppingSessions.set(incoming.chatId, saved.catalog || { ids: [], page: 0 })
+    const focus = products.find(p => p.id === saved.focusId)
+    if (focus) pendingProducts.set(incoming.chatId, focus)
+    else pendingProducts.delete(incoming.chatId)
+    if (saved.awaitingAdd && focus) pendingAddConfirmations.set(incoming.chatId, focus.id)
+    else pendingAddConfirmations.delete(incoming.chatId)
+  }
+  try { return await buildCustomerReplyInternal(incoming, products, promotions) }
+  finally {
+    await saveShoppingContext(incoming.chatId, { catalog: shoppingSessions.get(incoming.chatId) || { ids: [], page: 0 }, focusId: pendingProducts.get(incoming.chatId)?.id || null, awaitingAdd: pendingAddConfirmations.has(incoming.chatId) })
+  }
+}
+
+async function buildCustomerReplyInternal(incoming, products, promotions = []) {
   // A plain yes confirms only the immediately preceding product-add question.
   const addConfirmation = pendingAddConfirmations.get(incoming.chatId)
   pendingAddConfirmations.delete(incoming.chatId)
@@ -344,8 +361,18 @@ async function buildCustomerReply(incoming, products, promotions = []) {
     shoppingSessions.set(incoming.chatId, session)
     if (shoppingSessions.size > 1000) shoppingSessions.delete(shoppingSessions.keys().next().value)
   }
-  let action = shoppingAction(incoming.text)
+  const matchedByName = matchPhotoProducts(products, incoming.text)
+  const normalizedText = !matchedByName.length ? approximateShoppingCommand(incoming.text) || incoming.text : incoming.text
+  let action = shoppingAction(normalizedText)
   if (action?.type === 'checkout') incoming = { ...incoming, text: 'checkout' }
+  if (action?.type === 'select' || action?.type === 'select_add' || (action?.type === 'quantity' && /^[1-9][0-9]?$/.test(incoming.text.trim()) && !addConfirmation)) {
+    const number = action.number || action.quantity
+    const selected = products.find(product => product.id === session.ids[number - 1])
+    if (!selected) return { reply: session.ids.length ? `That number is not in your current collection. Choose a number from 1 to ${session.ids.length}, or say *browse* for a new list.` : 'Say *browse* to see the numbered collection, then choose a product by name or number.', imageProducts: [] }
+    if (action.type !== 'select_add') return buildProductCardReply(incoming.chatId, selected)
+    pendingProducts.set(incoming.chatId, selected)
+    action = { type: 'add', quantity: action.quantity, query: selected.name }
+  }
   if (action?.type === 'quantity') {
     if (addConfirmation && addConfirmation === pendingProducts.get(incoming.chatId)?.id) action = { type: 'add', quantity: action.quantity, query: '' }
     else return { reply: 'Which product would you like? Tell me its name first, then the quantity.', imageProducts: [] }
@@ -391,8 +418,8 @@ async function buildCustomerReply(incoming, products, promotions = []) {
   }
   if (action?.type === 'add' || action?.type === 'confirm_add') {
     const quoted = incoming.quotedText ? products.filter(product => incoming.quotedText.toLowerCase().includes(product.name.toLowerCase())) : []
-    let matches = action.query ? matchPhotoProducts(products, action.query) : quoted.length === 1 ? quoted : products.filter(product => product.id === pendingProducts.get(incoming.chatId)?.id)
-    if (action.query && /\band\b|,/.test(action.query)) matches = matchCartProducts(products, action.query)
+    let matches = incoming.selectedProductIds ? products.filter(p => incoming.selectedProductIds.includes(p.id)) : action.query ? matchPhotoProducts(products, action.query) : quoted.length === 1 ? quoted : products.filter(product => product.id === pendingProducts.get(incoming.chatId)?.id)
+    if (!incoming.selectedProductIds && action.query && /\band\b|,/.test(action.query)) matches = matchCartProducts(products, action.query)
     if (!matches.length || (matches.length !== 1 && !/\band\b|,/.test(action.query))) {
       return { reply: matches.length ? `Which one would you like?\n\n${matches.map(product => `${product.name} — ${money(product.price)}`).join('\n')}` : 'Which product would you like to add? Tell me its name, or say *browse* to have a look.', imageProducts: [] }
     }
@@ -419,13 +446,21 @@ async function buildCustomerReply(incoming, products, promotions = []) {
   const promotionReply = cartReply || paymentReply ? null : buildPromotionReply(incoming.text, promotions)
   const commerceReply = cartReply || paymentReply || promotionReply
   if (commerceReply) return { reply: sanitizeWhatsAppReply(commerceReply), imageProducts: [] }
-  let reply = sanitizeWhatsAppReply(await buildReply(incoming, products, promotions))
-  if (/\b(?:added|updated|removed)\b.*\b(?:cart|order)\b|your order is|please confirm|how many|would you like to add/i.test(reply)) {
-    const cart = await getCart(incoming.chatId)
-    reply = cart.length ? `${formatCartSummary(cart, 'Your cart', calculateCartPricing(cart, promotions))}\n\nTell me a product name to keep shopping, or type *checkout*.` : 'Your cart is empty. Tell me a product name to see its photo and add it.'
+  const decision = await resolveNaturalRequest(incoming, products, promotions)
+  if (decision.action === 'faq') return { reply: sanitizeWhatsAppReply(decision.entries.map(entry => entry.content).join('\n\n')), imageProducts: [] }
+  if (decision.action === 'select') {
+    const selected = products.filter(p => decision.productIds.includes(p.id))
+    if (selected.length === 1) return buildProductCardReply(incoming.chatId, selected[0])
+    return buildCustomerReplyInternal({ ...incoming, text: 'browse' }, selected, promotions)
   }
-  rememberPendingProduct(incoming.chatId, incoming.text, products)
-  return { reply, imageProducts: selectWhatsAppProductImages(products, incoming.text) }
+  if (decision.action === 'add') {
+    const selected = products.filter(p => decision.productIds.includes(p.id))
+    return buildCustomerReplyInternal({ ...incoming, text: `add ${decision.quantity} ${selected.map(p => p.name).join(' and ')} to cart`, selectedProductIds: decision.productIds }, products, promotions)
+  }
+  if (['browse', 'cart', 'checkout', 'help'].includes(decision.action)) return buildCustomerReplyInternal({ ...incoming, text: decision.action }, products, promotions)
+  const focus = pendingProducts.get(incoming.chatId)
+  return { reply: focus ? `You were looking at *${focus.name}*. Say *add one*, ask for its *photo*, or type *cart*.` : 'Tell me a product name, choose a number from the collection, or say *browse* to see what is available.', imageProducts: [] }
+
 }
 
 async function buildCartReply(incoming, products, promotions = []) {
@@ -435,6 +470,7 @@ async function buildCartReply(incoming, products, promotions = []) {
   if (isClearCartIntent(incoming.text)) {
     await clearCart(chatId)
     pendingPayments.delete(chatId)
+    pendingProducts.delete(chatId)
     return 'Your cart is now empty. Reply *browse* to keep shopping.'
   }
 
@@ -695,12 +731,6 @@ function resolvePaymentProduct(chatId, text, products) {
   return pendingProducts.get(chatId) || null
 }
 
-function rememberPendingProduct(chatId, text, products) {
-  const [matchedProduct] = findProductsForMessage(products, text, 1)
-  if (matchedProduct) {
-    pendingProducts.set(chatId, matchedProduct)
-  }
-}
 
 function extractPaymentPhone(text) {
   const match = String(text || '').match(/(?:\+?254|0)?7\d{8}/)
@@ -720,46 +750,26 @@ function normalizePaymentPhone(phone) {
   return ''
 }
 
-async function buildReply(incoming, products, promotions) {
+async function resolveNaturalRequest(incoming, products, promotions) {
   const runtime = await getRuntimeSettings()
-  if (!runtime.groqApiKey) {
-    return 'The AI assistant is not configured yet. Add an AI service key in Bot Settings.'
-  }
-
-  const history = conversations.get(incoming.chatId) || []
-  const [paymentContext, approvedKnowledge, replyTemplates] = await Promise.all([
-    buildPaymentContext(incoming.chatId),
-    readApprovedKnowledge(),
-    readMessageTemplates(),
-  ])
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${runtime.groqApiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: runtime.groqModel,
-      temperature: 0.2,
-      max_tokens: 350,
-      messages: [
-        { role: 'system', content: buildSystemPrompt(products, promotions, paymentContext, runtime, approvedKnowledge, replyTemplates) },
-        ...history,
-        { role: 'user', content: incoming.text.slice(0, 1200) },
-      ],
-    }),
-  })
-
-  if (!response.ok) {
-    const body = await response.text()
-    throw new Error(`AI provider request failed: ${response.status} ${body}`)
-  }
-
-  const data = await response.json()
-  return (
-    data?.choices?.[0]?.message?.content?.trim() ||
-    runtime.handoffMessage
-  )
+  if (!runtime.groqApiKey) return { action: 'clarify' }
+  const approved = (await readApprovedKnowledge()).map((entry, index) => ({ ...entry, id: entry.id || String(index) }))
+  const cart = await getCart(incoming.chatId)
+  const response = await fetch(`${process.env.GROQ_BASE_URL || 'https://api.groq.com/openai/v1'}/chat/completions`, {
+    method: 'POST', signal: AbortSignal.timeout(15000),
+    headers: { Authorization: `Bearer ${runtime.groqApiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: runtime.groqModel, temperature: 0, max_tokens: 300, response_format: { type: 'json_object' }, messages: [
+      { role: 'system', content: `Interpret the customer's intent. Return only JSON with action (browse, select, add, cart, checkout, help, faq, clarify), productIds, quantity, knowledgeIds. Use only catalog IDs and knowledge IDs supplied below. Use select to show a product, add only for an explicit purchase/add request; quantity must be an integer 1..99. Resolve pronouns from selectedProductId. For questions use faq and choose relevant approved knowledge IDs. If uncertain choose clarify. Never generate a customer-facing reply, catalog numbering, cart confirmation, payment confirmation or order. The app executes actions and renders authoritative results.\n${JSON.stringify({ catalog: products.map(({ id, name, category, price, available, stock }) => ({ id, name, category, price, available, stock })), selectedProductId: pendingProducts.get(incoming.chatId)?.id || null, displayedCatalogIds: shoppingSessions.get(incoming.chatId)?.ids || [], cart, approvedKnowledge: approved })}` },
+      ...(conversations.get(incoming.chatId) || []).slice(-6),
+      { role: 'user', content: incoming.text.slice(0, 1200) },
+    ] }),
+  }).catch(() => null)
+  if (!response?.ok) return { action: 'clarify' }
+  try {
+    const data = await response.json()
+    const decision = validateShoppingDecision(JSON.parse(data.choices?.[0]?.message?.content || '{}'), products, approved)
+    return { ...decision, entries: approved.filter(entry => decision.knowledgeIds?.includes(entry.id)).slice(0, 2) }
+  } catch { return { action: 'clarify' } }
 }
 
 async function buildPaymentContext(chatId) {
@@ -778,63 +788,6 @@ async function buildPaymentContext(chatId) {
     .join('\n')
 }
 
-function buildSystemPrompt(products, promotions, paymentContext, runtime, approvedKnowledge, replyTemplates) {
-  const knowledge = approvedKnowledge
-    .map((entry, index) => `${index + 1}. ${entry.topic}: ${entry.content}`)
-    .join('\n')
-  const catalog = products
-    .map((product, index) => {
-      const status = product.available ? `available, ${product.stock} in stock` : 'not available'
-      const imageStatus = product.image?.data ? 'Product picture stored for direct WhatsApp media delivery.' : 'No product picture uploaded.'
-      return `${index + 1}. ${product.name}: ${product.subtitle}. Category: ${product.category}. Price: KES ${product.price}. Status: ${status}. ${imageStatus}`
-    })
-    .join('\n')
-  const templates = replyTemplates
-    .map((template, index) => `${index + 1}. ${template.name} (${template.category}): ${template.body}`)
-    .join('\n')
-  const promotionInformation = promotions
-    .map((promotion, index) => `${index + 1}. ${promotion.name}: ${promotionCustomerDescription(promotion)}. ${promotion.description}${promotion.minimumSpend ? ` Minimum cart spend: KES ${promotion.minimumSpend}.` : ''}`)
-    .join('\n')
-
-  return `You are ${runtime.botName}, a WhatsApp FAQ assistant for ${runtime.businessName}.
-
-Business profile:
-${businessProfile.description}
-
-Tone:
-${businessProfile.tone}
-
-Approved information:
-${knowledge}
-
-Approved product catalog:
-${catalog}
-
-Active promotions:
-${promotionInformation || 'No active promotions.'}
-
-Approved reply templates:
-${templates || 'No saved templates.'}
-
-Recent payment records for this WhatsApp chat:
-${paymentContext}
-
-Rules:
-- Answer only from the approved information above.
-- For product questions, answer only from the approved product catalog above.
-- Never output product image URLs, placeholder links, example links, markdown image links, or data URLs. Product pictures are sent separately as real WhatsApp media.
-- When the customer asks generally what is available, give a concise numbered product list and end with: "Reply with a product name to see its photo."
-- Never claim to attach or send a photo. The application handles actual media separately.
-- You answer FAQs only. Never claim an item was added, an order was created, or a quantity was saved. Never ask for quantity or confirmation to mutate a cart; direct the customer to type a product name, cart, or checkout.
-- Mention only promotions listed under Active promotions. Pricing rules apply the best eligible offer automatically at checkout.
-- When an approved reply template fits the question, follow its wording and replace its variables with approved information.
-- Keep replies short enough for WhatsApp: use short paragraphs, simple language, and one clear next action.\n- Customers can type menu to see options, browse to see products, and cart to see their cart. Do not invent buttons or claim a human has been notified.
-- If the user asks for private payment data, OTPs, PINs, passwords, or sensitive information, refuse and give a safe next step.
-- If the approved information does not answer the question, say: "${runtime.handoffMessage}"
-- Do not invent prices, availability, policies, addresses, links, or phone numbers.
-- Never treat a customer's words such as "sent", "paid", or "done" as payment confirmation. A payment is successful only when its recorded status is Paid.
-- If booking details are needed, ask for the minimum next detail.`
-}
 
 async function sendRelevantProductImages(incoming, products, caption) {
   const productsToSend = products

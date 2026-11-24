@@ -43,7 +43,8 @@ test('shows names and honest availability with a single next action', () => {
 test('matches CK as a word and recognizes checkout typos and quantities', () => {
   const catalog = products
   assert.deepEqual(matchPhotoProducts(catalog, 'ck').map(p => p.id), ['ck'])
-  assert.equal(shoppingAction('Chexkou').type, 'checkout')
+  assert.deepEqual(shoppingAction('Number 7'), { type: 'select', number: 7 })
+  assert.deepEqual(shoppingAction('7 add 1'), { type: 'select_add', number: 7, quantity: 1 })
   assert.deepEqual(shoppingAction('1'), { type: 'quantity', quantity: 1 })
   assert.deepEqual(shoppingAction('Yes 1'), { type: 'quantity', quantity: 1 })
 })

@@ -4,7 +4,12 @@ const quantities = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 
 
 export function shoppingAction(text) {
   const value = String(text || '').trim().toLowerCase().replace(/[!?.,]+$/, '')
-  if (/^(checkout|check out|chexkou|chekout|checout|checkot|checkou|checkuot|pay|pay cart)$/.test(value)) return { type: 'checkout' }
+  if (/^(checkout|check out|pay|pay cart)$/.test(value)) return { type: 'checkout' }
+  const numberedAdd = value.match(/^(?:number\s+)?([1-9][0-9]{0,4})\s+add\s+([1-9][0-9]?)$/)
+  if (numberedAdd) return { type: 'select_add', number: Number(numberedAdd[1]), quantity: Number(numberedAdd[2]) }
+  const numberedProduct = value.match(/^(?:number|no\.?|item|product)\s*#?\s*([1-9][0-9]{0,4})$/)
+  if (numberedProduct) return { type: 'select', number: Number(numberedProduct[1]) }
+  if (/^[1-9][0-9]{2,4}$/.test(value)) return { type: 'select', number: Number(value) }
   const confirmedQuantity = value.match(/^yes(?: please)?[ ,]+([1-9][0-9]?|one|two|three|four|five|six|seven|eight|nine|ten)$/)
   if (confirmedQuantity) return { type: 'quantity', quantity: quantities[confirmedQuantity[1]] || Number(confirmedQuantity[1]) }
   if (/^(?:[1-9][0-9]?|one|two|three|four|five|six|seven|eight|nine|ten)$/.test(value)) return { type: 'quantity', quantity: quantities[value] || Number(value) }
@@ -31,7 +36,7 @@ export function catalogPage(products, page = 0, pageSize = 3, category = '') {
   if (!products.length) return 'I don’t have products in that collection right now. What else would you like to see?'
   const start = page * pageSize
   const visible = products.slice(start, start + pageSize)
-  return [`*${category || 'The collection'}*`, ...visible.map(product => `• ${product.name} — ${money(product.price)}${product.available && Number(product.stock) > 0 ? '' : ' · Sold out'}`), 'Which one catches your eye? Just tell me its name.', ...(start + pageSize < products.length ? ['Say *more* to see the next few.'] : [])].join('\n\n')
+  return [`*${category || 'The collection'}*`, ...visible.map((product, index) => `${start + index + 1}. ${product.name} — ${money(product.price)}${product.available && Number(product.stock) > 0 ? '' : ' · Sold out'}`), 'Which one catches your eye? Reply with its name or number.', ...(start + pageSize < products.length ? ['Say *more* to see the next few.'] : [])].join('\n\n')
 }
 
 export function productCard(product) {
