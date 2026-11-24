@@ -10,7 +10,8 @@ export function shoppingAction(text) {
   if (/^(track|track order|track my order|order status)$/.test(value)) return { type: 'track' }
   if (/^(help|contact|contact team|talk to someone|talk to a human|talk to our team)$/.test(value)) return { type: 'help' }
   if (/^(more|next|another|show another|show me another|next page|more products|more photos|more pics)$/.test(value)) return { type: 'more' }
-  if (/^(yes|yes please|add it|add this|add that|add to cart|add to my cart)$/.test(value)) return { type: 'add', quantity: 1, query: '' }
+  if (/^(yes|yes please)$/.test(value)) return { type: 'confirm_add', quantity: 1, query: '' }
+  if (/^(add it|add this|add that|add to cart|add to my cart)$/.test(value)) return { type: 'add', quantity: 1, query: '' }
   const photos = value.match(/^(?:(?:show|send)(?: me)?\s+)?(?:all\s+)?(?:product\s+)?(?:pic|pics|picture|pictures|photo|photos|image|images)(?:\s+(?:(?:of|for)\s+)?(.+))?$/)
   if (photos) return { type: 'photos', query: photos[1] || '' }
   const addition = value.match(/^(?:add|put|take|i['’]?ll take)\s+(?:(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten)\s*)?(.*?)(?:\s+(?:to|in)\s+(?:my\s+)?(?:cart|bag))?$/)

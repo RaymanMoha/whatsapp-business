@@ -13,7 +13,8 @@ test('supports natural intent without product codes or number menus', () => {
   assert.deepEqual(shoppingAction('add two'),{type:'add',quantity:2,query:''})
   assert.deepEqual(shoppingAction("I'll take 2 Gucci Bloom"),{type:'add',quantity:2,query:'gucci bloom'})
   assert.deepEqual(shoppingAction('add lipstick to my cart'),{type:'add',quantity:1,query:'lipstick'})
-  assert.equal(shoppingAction('yes please').type,'add')
+  assert.equal(shoppingAction('yes please').type,'confirm_add')
+  assert.equal(shoppingAction('add it').type,'add')
   for(const text of ['P1','2','254712345678','paid','checkout','Do not add lipstick','What are your hours?']) assert.equal(shoppingAction(text),null)
 })
 

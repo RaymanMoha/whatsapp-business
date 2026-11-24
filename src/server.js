@@ -71,6 +71,7 @@ const conversations = new Map()
 const pendingProducts = new Map()
 const pendingPayments = new Map()
 const shoppingSessions = new Map()
+const pendingAddConfirmations = new Map()
 const workerId = `bot-${process.pid}`
 let workerBusy = false
 let heartbeatBusy = false
@@ -311,7 +312,17 @@ function extractIncomingMessage(body) {
   }
 }
 
+function buildProductCardReply(chatId, product) {
+  pendingProducts.set(chatId, product)
+  pendingAddConfirmations.set(chatId, product.id)
+  if (pendingAddConfirmations.size > 1000) pendingAddConfirmations.delete(pendingAddConfirmations.keys().next().value)
+  return { reply: productCard(product), imageProducts: [product], photoCard: true }
+}
+
 async function buildCustomerReply(incoming, products, promotions = []) {
+  // A plain yes confirms only the immediately preceding product-add question.
+  const addConfirmation = pendingAddConfirmations.get(incoming.chatId)
+  pendingAddConfirmations.delete(incoming.chatId)
   const merchantDemoReply = buildDemoReply(incoming.text)
   if (merchantDemoReply) return { reply: sanitizeWhatsAppReply(merchantDemoReply), imageProducts: [] }
   let session = shoppingSessions.get(incoming.chatId) || { ids: [], page: 0, mode: 'browse', category: '' }
@@ -331,8 +342,7 @@ async function buildCustomerReply(incoming, products, promotions = []) {
     const focus = pendingProducts.get(incoming.chatId)
     const alternatives = products.filter(product => product.id !== focus.id && product.category === focus.category && product.available && Number(product.stock) > 0)
     if (alternatives.length) {
-      pendingProducts.set(incoming.chatId, alternatives[0])
-      return { reply: productCard(alternatives[0]), imageProducts: [alternatives[0]], photoCard: true }
+      return buildProductCardReply(incoming.chatId, alternatives[0])
     }
   }
   if (action?.type === 'browse' || category || action?.type === 'more' || action?.type === 'photos') {
@@ -344,8 +354,7 @@ async function buildCustomerReply(incoming, products, promotions = []) {
     const focus = pendingProducts.get(incoming.chatId)
     if (action?.type === 'photos' && !action.query && /(?:pic|photo|picture|image)\b/i.test(incoming.text) && !/\ball\b/i.test(incoming.text) && focus) specificPhotos = products.filter(product => product.id === focus.id)
     if (specificPhotos?.length === 1) {
-      pendingProducts.set(incoming.chatId, specificPhotos[0])
-      return { reply: productCard(specificPhotos[0]), imageProducts: specificPhotos, photoCard: true }
+      return buildProductCardReply(incoming.chatId, specificPhotos[0])
     }
     if (action?.type !== 'more' || !session.ids.length) {
       const entries = specificPhotos || (category ? products.filter(product => product.category === category) : products)
@@ -359,7 +368,10 @@ async function buildCustomerReply(incoming, products, promotions = []) {
     const imageProducts = shown.filter(product => product.image?.data && product.image?.mimetype)
     return { reply: catalogPage(entries, session.page, 3, session.category), imageProducts }
   }
-  if (action?.type === 'add') {
+  if (action?.type === 'confirm_add' && (!addConfirmation || addConfirmation !== pendingProducts.get(incoming.chatId)?.id)) {
+    return { reply: 'Would you like to *browse* more products, view your *cart*, or *checkout*? Tell me which one.', imageProducts: [] }
+  }
+  if (action?.type === 'add' || action?.type === 'confirm_add') {
     const quoted = incoming.quotedText ? products.filter(product => incoming.quotedText.toLowerCase().includes(product.name.toLowerCase())) : []
     let matches = action.query ? matchPhotoProducts(products, action.query) : quoted.length === 1 ? quoted : products.filter(product => product.id === pendingProducts.get(incoming.chatId)?.id)
     if (action.query && /\band\b|,/.test(action.query)) matches = matchCartProducts(products, action.query)
@@ -385,8 +397,7 @@ async function buildCustomerReply(incoming, products, promotions = []) {
   if (!action) {
     const matches = matchPhotoProducts(products, incoming.text)
     if (matches.length === 1) {
-      pendingProducts.set(incoming.chatId, matches[0])
-      return { reply: productCard(matches[0]), imageProducts: matches, photoCard: true }
+      return buildProductCardReply(incoming.chatId, matches[0])
     }
   }
   const reply = sanitizeWhatsAppReply(await buildReply(incoming, products, promotions))
