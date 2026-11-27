@@ -1,0 +1,98 @@
+name: whatsapp-cloud
+x-app: &app
+  restart: unless-stopped
+  env_file: ../../.env.gcp
+  environment:
+    WAHA_BASE_URL: http://waha:3000
+  depends_on:
+    mongo:
+      condition: service_healthy
+    waha:
+      condition: service_healthy
+  logging: &logs
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: '3'
+services:
+  dashboard:
+    <<: *app
+    build:
+      context: ../..
+      target: web
+    environment:
+      WAHA_BASE_URL: http://waha:3000
+      PORT: '3000'
+  bot:
+    <<: *app
+    build:
+      context: ../..
+      target: bot
+    environment:
+      WAHA_BASE_URL: http://waha:3000
+      PORT: '8080'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:8080/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+  mongo:
+    image: mongo:7.0
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME:?Set MONGO_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:?Set MONGO_PASSWORD}
+    command: ['mongod', '--wiredTigerCacheSizeGB', '0.25']
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', 'quit(db.adminCommand({ping:1}).ok ? 0 : 1)']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+    logging: *logs
+  waha:
+    image: ${WAHA_IMAGE:-devlikeapro/waha:gows-2026.10.1}
+    restart: unless-stopped
+    environment:
+      WAHA_API_KEY: ${WAHA_API_KEY:?Set WAHA_API_KEY}
+      WHATSAPP_DEFAULT_ENGINE: GOWS
+      WHATSAPP_HOOK_URL: http://bot:8080/webhook
+      WHATSAPP_HOOK_EVENTS: message
+      WHATSAPP_HOOK_HMAC_KEY: ${WHATSAPP_HOOK_HMAC_KEY:?Set WHATSAPP_HOOK_HMAC_KEY}
+      WHATSAPP_HOOK_RETRIES_POLICY: exponential
+      WHATSAPP_HOOK_RETRIES_ATTEMPTS: '6'
+      WAHA_DASHBOARD_ENABLED: 'false'
+      WHATSAPP_SWAGGER_ENABLED: 'false'
+    volumes:
+      - waha_sessions:/app/.sessions
+    ports:
+      - '127.0.0.1:3001:3000'
+    healthcheck:
+      test: ['CMD', 'curl', '-fsS', 'http://127.0.0.1:3000/health']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    logging: *logs
+  proxy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN}
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - ../../Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [dashboard]
+    logging: *logs
+volumes:
+  mongo_data:
+  waha_sessions:
+  caddy_data:
+  caddy_config:

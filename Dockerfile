@@ -24,6 +24,7 @@ ENV NODE_ENV=production \
 COPY --from=production-dependencies /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
+COPY --from=builder /app/app/fonts ./app/fonts
 COPY --from=builder /app/package.json ./package.json
 EXPOSE 3000
 CMD ["npm", "start"]
@@ -35,5 +36,7 @@ ENV NODE_ENV=production \
 COPY --from=production-dependencies /app/node_modules ./node_modules
 COPY package.json ./package.json
 COPY src ./src
+COPY app/fonts ./app/fonts
+COPY public/appbase-logo-color.png ./public/appbase-logo-color.png
 EXPOSE 8080
 CMD ["npm", "run", "bot:start"]
