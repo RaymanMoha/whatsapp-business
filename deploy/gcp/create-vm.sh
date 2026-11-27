@@ -43,5 +43,5 @@ fi
 gcloud compute instances create "$instance" --project="$project" --zone="$zone" \
   --machine-type="${GCP_MACHINE_TYPE:-e2-small}" --image-family=ubuntu-2404-lts-amd64 --image-project=ubuntu-os-cloud \
   --boot-disk-size=30GB --boot-disk-type=pd-standard --subnet="$subnet" --tags=whatsapp-demo \
-  --no-service-account --network-tier=STANDARD --metadata-from-file="startup-script=$script_dir/vm-bootstrap.sh"
+  --no-service-account --no-scopes --network-tier=STANDARD --metadata-from-file="startup-script=$script_dir/vm-bootstrap.sh"
 gcloud compute instances describe "$instance" --zone="$zone" --project="$project" --format='value(networkInterfaces[0].accessConfigs[0].natIP)'
