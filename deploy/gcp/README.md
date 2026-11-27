@@ -6,7 +6,11 @@ This deployment moves the bot, WAHA, dashboard, callback receiver and MongoDB to
 
 Activate an eligible Google Cloud Free Trial yourself, complete billing verification and link it to the intended project. Verify remaining credit and the trial end date before creating resources. Do not upgrade to paid billing as part of this workflow. A project without linked billing cannot host the VM.
 
-The default VM is `e2-medium` (4 GB RAM), chosen to fit the complete application and local database. **It is not an Always Free VM.** Its usage and public IPv4 consume trial credit. Keep the existing Vercel deployment as a fallback. Trial credits expire, and an unupgraded trial may stop its resources. A billing alert is informational, not a spending cap.
+The default VM is `e2-small` (2 GB RAM, with 4 GB disk swap), chosen to fit the complete application and local database. **It is not an Always Free VM.** Its usage and public IPv4 consume trial credit. Keep the existing Vercel deployment as a fallback. Trial credits expire, and an unupgraded trial may stop its resources. A billing alert is informational, not a spending cap.
+
+## Approved paid-account alternative
+
+If the account is paid rather than a free trial, obtain a monthly spending limit before provisioning. Do not set `GCP_TRIAL_VERIFIED=true` for a paid account. Use `GCP_BILLING_MODE=approved GCP_APPROVED_MONTHLY_BUDGET=30` only after that limit has been authorized. Create project-specific billing alerts, use Standard Tier networking and keep one fixed-size VM. Alerts do not automatically stop spending.
 
 ## Prepare the VM
 
