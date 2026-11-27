@@ -9,7 +9,8 @@ RUN npm ci
 
 FROM dependencies AS builder
 COPY . .
-RUN npm run build
+# Use the stable Next.js 15 compiler for small cloud builders.
+RUN npx next build
 
 FROM base AS production-dependencies
 ENV NODE_ENV=production
