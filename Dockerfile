@@ -5,7 +5,7 @@ RUN npm install --global npm@11.6.2
 COPY package.json package-lock.json ./
 
 FROM base AS dependencies
-RUN npm ci
+RUN npm ci --no-audit --no-fund
 
 FROM dependencies AS builder
 COPY . .
@@ -14,7 +14,7 @@ RUN npx next build
 
 FROM base AS production-dependencies
 ENV NODE_ENV=production
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm ci --omit=dev --no-audit --no-fund && npm cache clean --force
 
 FROM node:20-bookworm-slim AS web
 WORKDIR /app
